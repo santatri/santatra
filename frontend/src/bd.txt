@@ -1,0 +1,121 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.articles (
+  id integer NOT NULL DEFAULT nextval('articles_id_seq'::regclass),
+  nom character varying NOT NULL,
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['badge'::character varying, 'polo'::character varying]::text[])),
+  prix numeric NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT articles_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.articles_etudiants (
+  id integer NOT NULL DEFAULT nextval('articles_etudiants_id_seq'::regclass),
+  etudiant_id integer NOT NULL,
+  article_id integer NOT NULL,
+  date_achat date DEFAULT CURRENT_DATE,
+  statut character varying DEFAULT 'non_payé'::character varying CHECK (statut::text = ANY (ARRAY['non_payé'::character varying, 'payé'::character varying]::text[])),
+  CONSTRAINT articles_etudiants_pkey PRIMARY KEY (id),
+  CONSTRAINT articles_etudiants_etudiant_id_fkey FOREIGN KEY (etudiant_id) REFERENCES public.etudiants(id),
+  CONSTRAINT articles_etudiants_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.articles(id)
+);
+CREATE TABLE public.centres (
+  id integer NOT NULL DEFAULT nextval('centres_id_seq'::regclass),
+  nom character varying NOT NULL,
+  adresse character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT centres_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.depenses (
+  id integer NOT NULL DEFAULT nextval('depenses_id_seq'::regclass),
+  centre_id integer NOT NULL,
+  user_id uuid,
+  type_depense character varying NOT NULL CHECK (type_depense::text = ANY (ARRAY['salaire'::character varying, 'loyer'::character varying, 'eau'::character varying, 'électricité'::character varying, 'fournitures'::character varying, 'autre'::character varying]::text[])),
+  description text,
+  montant numeric NOT NULL,
+  date_depense date DEFAULT CURRENT_DATE,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT depenses_pkey PRIMARY KEY (id),
+  CONSTRAINT depenses_centre_id_fkey FOREIGN KEY (centre_id) REFERENCES public.centres(id),
+  CONSTRAINT depenses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.depenses_obligatoires (
+  id integer NOT NULL DEFAULT nextval('depenses_obligatoires_id_seq'::regclass),
+  centre_id integer,
+  montant numeric NOT NULL,
+  mois character varying NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT depenses_obligatoires_pkey PRIMARY KEY (id),
+  CONSTRAINT depenses_obligatoires_centre_id_fkey FOREIGN KEY (centre_id) REFERENCES public.centres(id)
+);
+CREATE TABLE public.etudiants (
+  id integer NOT NULL DEFAULT nextval('etudiants_id_seq'::regclass),
+  nom character varying NOT NULL,
+  prenom character varying NOT NULL,
+  date_naissance date,
+  email character varying,
+  telephone character varying,
+  centre_id integer NOT NULL,
+  statut character varying NOT NULL DEFAULT 'actif'::character varying CHECK (statut::text = ANY (ARRAY['actif'::character varying, 'quitte'::character varying, 'fini'::character varying]::text[])),
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT etudiants_pkey PRIMARY KEY (id),
+  CONSTRAINT etudiants_centre_id_fkey FOREIGN KEY (centre_id) REFERENCES public.centres(id)
+);
+CREATE TABLE public.formations (
+  id integer NOT NULL DEFAULT nextval('formations_id_seq'::regclass),
+  nom character varying NOT NULL,
+  duree integer NOT NULL,
+  frais_mensuel numeric NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT formations_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.inscriptions (
+  id integer NOT NULL DEFAULT nextval('inscriptions_id_seq'::regclass),
+  etudiant_id integer NOT NULL,
+  formation_id integer NOT NULL,
+  date_inscription date DEFAULT CURRENT_DATE,
+  droits_inscription_paye boolean DEFAULT false,
+  livre_paye boolean DEFAULT false,
+  CONSTRAINT inscriptions_pkey PRIMARY KEY (id),
+  CONSTRAINT inscriptions_etudiant_id_fkey FOREIGN KEY (etudiant_id) REFERENCES public.etudiants(id),
+  CONSTRAINT inscriptions_formation_id_fkey FOREIGN KEY (formation_id) REFERENCES public.formations(id)
+);
+CREATE TABLE public.livres (
+  id integer NOT NULL DEFAULT nextval('livres_id_seq'::regclass),
+  formation_id integer NOT NULL,
+  nom character varying NOT NULL,
+  prix numeric NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT livres_pkey PRIMARY KEY (id),
+  CONSTRAINT livres_formation_id_fkey FOREIGN KEY (formation_id) REFERENCES public.formations(id)
+);
+CREATE TABLE public.livres_etudiants (
+  id integer NOT NULL DEFAULT nextval('livres_etudiants_id_seq'::regclass),
+  etudiant_id integer NOT NULL,
+  livre_id integer NOT NULL,
+  date_achat date DEFAULT CURRENT_DATE,
+  CONSTRAINT livres_etudiants_pkey PRIMARY KEY (id),
+  CONSTRAINT livres_etudiants_etudiant_id_fkey FOREIGN KEY (etudiant_id) REFERENCES public.etudiants(id),
+  CONSTRAINT livres_etudiants_livre_id_fkey FOREIGN KEY (livre_id) REFERENCES public.livres(id)
+);
+CREATE TABLE public.paiements (
+  id integer NOT NULL DEFAULT nextval('paiements_id_seq'::regclass),
+  inscription_id integer NOT NULL,
+  type_paiement character varying NOT NULL CHECK (type_paiement::text = ANY (ARRAY['droits'::character varying, 'formation'::character varying, 'livre'::character varying, 'badge'::character varying, 'polo'::character varying]::text[])),
+  montant numeric NOT NULL,
+  mois_paye character varying,
+  date_paiement date DEFAULT CURRENT_DATE,
+  CONSTRAINT paiements_pkey PRIMARY KEY (id),
+  CONSTRAINT paiements_inscription_id_fkey FOREIGN KEY (inscription_id) REFERENCES public.inscriptions(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nom character varying NOT NULL,
+  prenom character varying NOT NULL,
+  email character varying NOT NULL UNIQUE,
+  role character varying NOT NULL CHECK (role::text = ANY (ARRAY['admin'::character varying, 'gerant'::character varying]::text[])),
+  centre_id integer,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_centre_id_fkey FOREIGN KEY (centre_id) REFERENCES public.centres(id)
+);

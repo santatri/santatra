@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "8219",
+    "database": "ge_cfpm",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "8219",
+    "database": "ge_cfpm",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "8219",
+    "database": "ge_cfpm",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  }
+}
