@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from "../context/authContext";
 import {
   FaUserGraduate, FaPlus, FaEdit, FaTrash, FaEye, FaTimes,
@@ -6,20 +6,157 @@ import {
   FaSearch, FaChevronLeft, FaChevronRight, FaPhone,
   FaCalendar, FaFilter, FaSort,
   FaCheck, FaClock, FaExclamationTriangle, FaList,
-  FaSpinner, FaIdCard, FaSyncAlt
+  FaSpinner, FaIdCard, FaSyncAlt, FaChevronDown
 } from 'react-icons/fa';
 import { API_URL } from '../config';
-import SearchableSelect from '../components/SearchableSelect';
 
-// Fonction utilitaire pour recherche "ressemblante" (fuzzy search)
+// ==================== Composant SearchableSelect amélioré ====================
+const SearchableSelect = ({ 
+  label, 
+  options = [], 
+  value, 
+  onChange, 
+  placeholder = "Sélectionner...", 
+  disabled = false,
+  className = "",
+  required = false
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const containerRef = useRef(null);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+
+  // Filtrer les options en fonction de la recherche
+  const filteredOptions = options.filter(opt => 
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Trouver l'option sélectionnée
+  const selectedOption = options.find(opt => opt.value == value); // == pour permettre comparaison string/number
+
+  // Fermer la liste au clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Gérer les touches du clavier
+  const handleKeyDown = (e) => {
+    if (!isOpen) return;
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex(prev => (prev + 1) % filteredOptions.length);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex(prev => (prev - 1 + filteredOptions.length) % filteredOptions.length);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
+          onChange(filteredOptions[highlightedIndex].value);
+          setIsOpen(false);
+          setSearch("");
+        }
+        break;
+      case "Escape":
+        setIsOpen(false);
+        setSearch("");
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Faire défiler l'élément mis en surbrillance dans la vue
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const highlightedElement = listRef.current.children[highlightedIndex];
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex]);
+
+  return (
+    <div ref={containerRef} className={`relative ${className}`}>
+      {label && (
+        <label className="block text-[10px] font-medium text-gray-700 mb-0.5">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
+      <div
+        onClick={() => !disabled && setIsOpen(true)}
+        className={`w-full px-1.5 py-1 border border-gray-300 rounded focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-transparent transition duration-200 text-xs flex items-center justify-between cursor-pointer ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+      >
+        <span className={selectedOption ? "text-gray-900" : "text-gray-400"}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <FaChevronDown className="text-gray-400 text-[10px]" />
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto">
+          <div className="sticky top-0 bg-white p-1 border-b border-gray-200">
+            <div className="relative">
+              <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-[10px]" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setHighlightedIndex(-1);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Rechercher..."
+                className="w-full pl-6 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                autoFocus
+              />
+            </div>
+          </div>
+          <ul ref={listRef} className="py-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt, index) => (
+                <li
+                  key={opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-blue-50 ${highlightedIndex === index ? 'bg-blue-100' : ''} ${opt.value == value ? 'bg-blue-50 font-medium' : ''}`}
+                >
+                  {opt.label}
+                </li>
+              ))
+            ) : (
+              <li className="px-3 py-2 text-xs text-gray-500">Aucun résultat</li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==================== Fonctions utilitaires ====================
 const fuzzyMatch = (str1, str2) => {
   const s1 = str1.toLowerCase();
   const s2 = str2.toLowerCase();
 
-  // Match exact ou contient
   if (s1.includes(s2) || s2.includes(s1)) return true;
 
-  // Fuzzy match: chaque caractère de s2 existe dans s1 dans le même ordre
   let j = 0;
   for (let i = 0; i < s1.length && j < s2.length; i++) {
     if (s1[i] === s2[j]) j++;
@@ -27,7 +164,6 @@ const fuzzyMatch = (str1, str2) => {
   return j === s2.length;
 };
 
-// Fonction utilitaire pour formater la durée
 const formatDuree = (duree) => {
   if (duree === 0.25) return "1 semaine";
   if (duree === 0.5) return "2 semaines";
@@ -39,7 +175,6 @@ const formatDuree = (duree) => {
   return `${mois} mois et ${semaines} semaine${semaines > 1 ? 's' : ''}`;
 };
 
-// Fonction utilitaire pour vérifier si une formation est finie
 const isFormationFinishedByDate = (dateInscription, duree) => {
   if (!dateInscription || !duree) return false;
 
@@ -50,7 +185,6 @@ const isFormationFinishedByDate = (dateInscription, duree) => {
   return new Date() > dateEnd;
 };
 
-// Composant RefreshButton intégré
 const RefreshButton = ({ onClick, loading = false, className = '' }) => {
   return (
     <button
@@ -69,7 +203,6 @@ const RefreshButton = ({ onClick, loading = false, className = '' }) => {
   );
 };
 
-// Fonction pour générer les mois de formation
 const generateMoisFormation = (dateInscription, duree) => {
   const dureeFloat = parseFloat(duree);
 
@@ -91,6 +224,7 @@ const generateMoisFormation = (dateInscription, duree) => {
   return list;
 };
 
+// ==================== Composant principal Etudiants ====================
 const Etudiants = () => {
   const [etudiants, setEtudiants] = useState([]);
   const [centres, setCentres] = useState([]);
@@ -125,11 +259,9 @@ const Etudiants = () => {
     date_creation: new Date().toISOString().split('T')[0],
   });
 
-  // Charger les données
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Charger les étudiants
       const etudiantsRes = await fetch(`${API_URL}/api/etudiants`);
       if (!etudiantsRes.ok) {
         throw new Error('Erreur lors du chargement des étudiants');
@@ -137,7 +269,6 @@ const Etudiants = () => {
       const etudiantsData = await etudiantsRes.json();
       setEtudiants(etudiantsData);
 
-      // Charger les centres
       const centresRes = await fetch(`${API_URL}/api/centres`);
       if (centresRes.ok) {
         const centresData = await centresRes.json();
@@ -155,10 +286,8 @@ const Etudiants = () => {
     fetchData();
   }, [fetchData]);
 
-  // Filtrer et trier les étudiants
   const filteredEtudiants = etudiants.filter(etudiant => {
     if (!searchTerm) {
-      // Si pas de recherche, montrer tous les étudiants
       const matchesCentre = !selectedCentre || etudiant.centre_id === parseInt(selectedCentre);
       const matchesStatut = !selectedStatut || etudiant.statut === selectedStatut;
       return matchesCentre && matchesStatut;
@@ -176,7 +305,6 @@ const Etudiants = () => {
     return matchesSearch && matchesCentre && matchesStatut;
   });
 
-  // Trier les étudiants
   const sortedEtudiants = [...filteredEtudiants].sort((a, b) => {
     switch (sortBy) {
       case 'nom':
@@ -190,18 +318,15 @@ const Etudiants = () => {
     }
   });
 
-  // Pagination
   const totalPages = Math.ceil(sortedEtudiants.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentEtudiants = sortedEtudiants.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Réinitialiser la pagination quand les filtres changent
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCentre, selectedStatut]);
 
-  // Générer les numéros de page
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 3;
@@ -222,7 +347,6 @@ const Etudiants = () => {
     return pages;
   };
 
-  // Réinitialiser les filtres
   const resetFilters = () => {
     setSearchTerm('');
     if (!(user && user.role === 'gerant')) {
@@ -233,13 +357,11 @@ const Etudiants = () => {
     setCurrentPage(1);
   };
 
-  // Obtenir le nom du centre
   const getCentreName = (centre_id) => {
     const centre = centres.find((c) => c.id === centre_id);
     return centre ? centre.nom : '-';
   };
 
-  // Ouvrir les détails d'un étudiant
   const openEtudiantDetail = async (etudiant) => {
     try {
       setLoadingDetailsId(etudiant.id);
@@ -266,7 +388,6 @@ const Etudiants = () => {
     }
   };
 
-  // Ajouter ou modifier un étudiant
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -293,7 +414,6 @@ const Etudiants = () => {
       };
 
       if (editingId) {
-        // Mise à jour
         response = await fetch(`${API_URL}/api/etudiants/${editingId}`, {
           method: 'PUT',
           headers: {
@@ -302,7 +422,6 @@ const Etudiants = () => {
           body: JSON.stringify(studentData)
         });
       } else {
-        // Création
         response = await fetch(`${API_URL}/api/etudiants`, {
           method: 'POST',
           headers: {
@@ -335,7 +454,6 @@ const Etudiants = () => {
     }
   };
 
-  // Modifier un étudiant
   const handleEdit = (etudiant) => {
     setFormData({
       nom: etudiant.nom,
@@ -350,7 +468,6 @@ const Etudiants = () => {
     setShowForm(true);
   };
 
-  // Annuler l'édition/ajout
   const handleCancel = () => {
     setFormData({
       nom: '',
@@ -365,7 +482,6 @@ const Etudiants = () => {
     setShowForm(false);
   };
 
-  // Supprimer un étudiant
   const handleDelete = async (id) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
       return;
@@ -434,7 +550,6 @@ const Etudiants = () => {
 
         {/* Recherche et Filtres */}
         <div className="space-y-1.5 mb-2 px-1">
-          {/* Barre de recherche */}
           <div className="relative">
             <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-[10px]" />
             <input
@@ -454,7 +569,6 @@ const Etudiants = () => {
             )}
           </div>
 
-          {/* Filtres et Tri */}
           <div className="grid grid-cols-2 gap-1.5">
             {/* Filtre par Centre */}
             <div className="relative">
@@ -484,7 +598,6 @@ const Etudiants = () => {
             </div>
           </div>
 
-          {/* Tri */}
           <div className="relative">
             <FaSort className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-[10px]" />
             <select
@@ -498,7 +611,6 @@ const Etudiants = () => {
             </select>
           </div>
 
-          {/* Bouton reset filtres */}
           {(selectedCentre || selectedStatut || searchTerm) && (
             <div className="flex justify-center">
               <button
@@ -512,7 +624,6 @@ const Etudiants = () => {
           )}
         </div>
 
-        {/* Message Alert compact */}
         {message && (
           <div className={`mb-2 mx-1 p-1.5 rounded text-xs ${message.includes('❌')
             ? 'bg-red-50 border border-red-200 text-red-700'
@@ -528,9 +639,9 @@ const Etudiants = () => {
           </div>
         )}
 
-        {/* Form Modal compact */}
+        {/* Formulaire modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-1 z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
             <div className="bg-white rounded shadow-lg w-full max-w-sm max-h-[85vh] overflow-y-auto">
               <div className="p-2 border-b border-gray-200">
                 <div className="flex items-center justify-between">
@@ -640,6 +751,7 @@ const Etudiants = () => {
                     value={formData.centre_id}
                     onChange={(val) => setFormData({ ...formData, centre_id: val })}
                     disabled={user && user.role === 'gerant'}
+                    required={true}
                     className="w-full text-xs"
                   />
                 </div>
@@ -666,12 +778,11 @@ const Etudiants = () => {
           </div>
         )}
 
-        {/* Liste compacte des étudiants */}
+        {/* Liste des étudiants */}
         {currentEtudiants.length > 0 && (
           <div className="space-y-1">
             {currentEtudiants.map((e) => (
               <div key={e.id} className="bg-white rounded shadow-xs border border-gray-200 p-1.5">
-                {/* Ligne 1: Nom + Statut */}
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold text-gray-900 truncate">
@@ -691,7 +802,6 @@ const Etudiants = () => {
                   </span>
                 </div>
 
-                {/* Ligne 2: Informations compactes */}
                 <div className="flex items-center justify-between text-[10px] text-gray-600 mb-1.5">
                   <div className="flex items-center space-x-2">
                     {e.matricule && (
@@ -713,7 +823,6 @@ const Etudiants = () => {
                   </div>
                 </div>
 
-                {/* Ligne 3: Actions compactes */}
                 <div className="flex justify-between pt-1 border-t border-gray-200">
                   <button
                     onClick={() => openEtudiantDetail(e)}
@@ -752,7 +861,6 @@ const Etudiants = () => {
               </div>
             ))}
 
-            {/* Pagination ultra compacte */}
             {totalPages > 1 && (
               <div className="flex flex-col items-center mt-2 pt-2 border-t border-gray-200 gap-1">
                 <div className="text-[10px] text-gray-600">
@@ -794,7 +902,6 @@ const Etudiants = () => {
           </div>
         )}
 
-        {/* Empty State compact */}
         {!loading && sortedEtudiants.length === 0 && (
           <div className="bg-white rounded shadow-xs border border-gray-200 p-3 text-center">
             <FaUserGraduate className="w-6 h-6 text-gray-400 mx-auto mb-1" />
@@ -833,7 +940,7 @@ const Etudiants = () => {
           </div>
         )}
 
-        {/* Modal détails étudiant compact */}
+        {/* Modal détails étudiant */}
         {detailEtudiant && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-1 z-50">
             <div className="bg-white rounded shadow-lg w-full max-w-sm max-h-[85vh] overflow-y-auto">
@@ -859,7 +966,6 @@ const Etudiants = () => {
                 </div>
               ) : (
                 <div className="p-2">
-                  {/* Informations de base compactes */}
                   <div className="space-y-2 mb-3">
                     <h3 className="text-xs font-medium text-gray-900 flex items-center">
                       <FaUserGraduate className="mr-1 text-blue-600 text-[10px]" />
@@ -897,7 +1003,6 @@ const Etudiants = () => {
                     </div>
                   </div>
 
-                  {/* Résumé ultra compact */}
                   <div className="space-y-2 mb-3">
                     <h3 className="text-xs font-medium text-gray-900 flex items-center">
                       <FaGraduationCap className="mr-1 text-green-600 text-[10px]" />
@@ -920,7 +1025,6 @@ const Etudiants = () => {
                     </div>
                   </div>
 
-                  {/* Historique des paiements */}
                   {detailEtudiant.paiements.length > 0 && (
                     <div className="mb-3">
                       <h3 className="text-xs font-medium text-gray-900 mb-1 flex items-center">
@@ -955,7 +1059,6 @@ const Etudiants = () => {
                     </div>
                   )}
 
-                  {/* Inscriptions & Paiements compacts */}
                   {detailEtudiant.inscriptions.length > 0 && (
                     <div className="mb-3">
                       <h3 className="text-xs font-medium text-gray-900 mb-1 flex items-center">
@@ -991,7 +1094,6 @@ const Etudiants = () => {
                                 </div>
                               </div>
 
-                              {/* Mensualités */}
                               {insc.formations?.duree > 0 && (
                                 <div className="mt-1">
                                   <div className="text-[10px] text-gray-700 font-medium mb-1">
