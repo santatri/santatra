@@ -68,7 +68,10 @@ const AutreMontant = () => {
   const [stats, setStats] = useState({
     total: 0,
     count: 0,
-    moyenne: 0
+    totalJour: 0,
+    totalSemaine: 0,
+    totalMois: 0,
+    totalAnnee: 0
   });
 
   // Fetch data
@@ -110,14 +113,57 @@ const AutreMontant = () => {
   };
 
   const calculateStats = (data) => {
-    const total = data.reduce((sum, m) => sum + (parseFloat(m.montant) || 0), 0);
-    const count = data.length;
-    const moyenne = count > 0 ? total / count : 0;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+
+    // Calcul du début de la semaine (Lundi)
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Initialisation des compteurs
+    let total = 0;
+    let totalJour = 0;
+    let totalSemaine = 0;
+    let totalMois = 0;
+    let totalAnnee = 0;
+
+    data.forEach(m => {
+      const montant = parseFloat(m.montant) || 0;
+      const datePaiement = new Date(m.date_paiement);
+
+      total += montant;
+
+      // Stats par période
+      if (datePaiement.getFullYear() === currentYear) {
+        totalAnnee += montant;
+
+        if (datePaiement.getMonth() === currentMonth) {
+          totalMois += montant;
+
+          if (datePaiement.getDate() === currentDay) {
+            totalJour += montant;
+          }
+        }
+      }
+
+      // Semaine (comparaison simple avec startOfWeek)
+      if (datePaiement >= startOfWeek) {
+        totalSemaine += montant;
+      }
+    });
 
     setStats({
       total,
-      count,
-      moyenne
+      count: data.length,
+      totalJour,
+      totalSemaine,
+      totalMois,
+      totalAnnee
     });
   };
 
@@ -337,33 +383,53 @@ const AutreMontant = () => {
               {montants.length}
             </span>
           </button>
-          <button
-            onClick={() => setActiveTab('types')}
-            className={`px-3 py-2 text-xs font-medium flex items-center gap-1 ${activeTab === 'types' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
-          >
-            <FiTag className="w-3.5 h-3.5" />
-            Types
-            <span className={`ml-1 px-1.5 py-0.5 text-xs rounded ${activeTab === 'types' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-              {types.length}
-            </span>
-          </button>
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => setActiveTab('types')}
+              className={`px-3 py-2 text-xs font-medium flex items-center gap-1 ${activeTab === 'types' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+            >
+              <FiTag className="w-3.5 h-3.5" />
+              Types
+              <span className={`ml-1 px-1.5 py-0.5 text-xs rounded ${activeTab === 'types' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                {types.length}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Stats mini */}
       {activeTab === 'montants' && (
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className={`grid grid-cols-2 md:grid-cols-3 ${user?.role === 'admin' ? 'lg:grid-cols-6' : 'lg:grid-cols-3'} gap-2 mb-3`}>
           <div className="bg-white border border-gray-200 rounded-lg p-2">
-            <p className="text-xs text-gray-500 font-medium">Total</p>
-            <p className="text-sm font-bold text-blue-600">{formatCurrency(stats.total)}</p>
+            <p className="text-xs text-gray-500 font-medium">Aujourd'hui</p>
+            <p className="text-sm font-bold text-blue-600">{formatCurrency(stats.totalJour)}</p>
           </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-2">
+            <p className="text-xs text-gray-500 font-medium">Cette Semaine</p>
+            <p className="text-sm font-bold text-blue-600">{formatCurrency(stats.totalSemaine)}</p>
+          </div>
+
+          {user?.role === 'admin' && (
+            <>
+              <div className="bg-white border border-gray-200 rounded-lg p-2">
+                <p className="text-xs text-gray-500 font-medium">Ce Mois</p>
+                <p className="text-sm font-bold text-blue-600">{formatCurrency(stats.totalMois)}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg p-2">
+                <p className="text-xs text-gray-500 font-medium">Cette Année</p>
+                <p className="text-sm font-bold text-blue-600">{formatCurrency(stats.totalAnnee)}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg p-2">
+                <p className="text-xs text-gray-500 font-medium">Total Global</p>
+                <p className="text-sm font-bold text-gray-800">{formatCurrency(stats.total)}</p>
+              </div>
+            </>
+          )}
+
           <div className="bg-white border border-gray-200 rounded-lg p-2">
             <p className="text-xs text-gray-500 font-medium">Nombre</p>
             <p className="text-sm font-bold text-gray-800">{stats.count}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-2">
-            <p className="text-xs text-gray-500 font-medium">Moyenne</p>
-            <p className="text-sm font-bold text-green-600">{formatCurrency(stats.moyenne)}</p>
           </div>
         </div>
       )}

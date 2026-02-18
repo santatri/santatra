@@ -9,6 +9,7 @@ import {
   FaSpinner, FaIdCard, FaSyncAlt
 } from 'react-icons/fa';
 import { API_URL } from '../config';
+import SearchableSelect from '../components/SearchableSelect';
 
 // Fonction utilitaire pour recherche "ressemblante" (fuzzy search)
 const fuzzyMatch = (str1, str2) => {
@@ -457,20 +458,14 @@ const Etudiants = () => {
           <div className="grid grid-cols-2 gap-1.5">
             {/* Filtre par Centre */}
             <div className="relative">
-              <FaBuilding className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-[10px]" />
-              <select
+              <SearchableSelect
+                placeholder="Tous les centres"
+                options={[{ value: '', label: 'Tous les centres' }, ...centres.map(c => ({ value: c.id, label: c.nom }))]}
                 value={selectedCentre}
-                onChange={(e) => setSelectedCentre(e.target.value)}
+                onChange={(val) => setSelectedCentre(val)}
                 disabled={user && user.role === 'gerant'}
-                className={`w-full pl-6 pr-4 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent transition duration-200 text-xs appearance-none bg-white ${user && user.role === 'gerant' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-              >
-                <option value="">Tous les centres</option>
-                {centres.map((centre) => (
-                  <option key={centre.id} value={centre.id}>
-                    {centre.nom}
-                  </option>
-                ))}
-              </select>
+                className="w-full text-xs"
+              />
             </div>
 
             {/* Filtre par Statut */}
@@ -638,23 +633,15 @@ const Etudiants = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-medium text-gray-700 mb-0.5">
-                    Centre *
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="Centre *"
+                    placeholder="Choisir centre"
+                    options={centres.map(c => ({ value: c.id, label: c.nom }))}
                     value={formData.centre_id}
-                    onChange={(e) => setFormData({ ...formData, centre_id: e.target.value })}
+                    onChange={(val) => setFormData({ ...formData, centre_id: val })}
                     disabled={user && user.role === 'gerant'}
-                    className={`w-full px-1.5 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent transition duration-200 text-xs ${user && user.role === 'gerant' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                    required
-                  >
-                    <option value="">Choisir centre</option>
-                    {centres.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nom}
-                      </option>
-                    ))}
-                  </select>
+                    className="w-full text-xs"
+                  />
                 </div>
 
                 <div className="flex gap-1 pt-1 border-t border-gray-200">

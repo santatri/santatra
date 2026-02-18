@@ -101,8 +101,8 @@ const Dashboard = () => {
           { name: 'Caisse', path: '/dashboard/depensesObligatoiresDashboard' },
           { name: 'Mois prochain', path: '/dashboard/dashboardMontants' },
           { name: 'AutreMontant', path: '/dashboard/autreMontant' },
-          { name: 'Total', path: '/dashboard/paiementsEtAutres' },
-          { name: 'Paramètres', path: '/dashboard/parametres' }
+          // { name: 'Total', path: '/dashboard/paiementsEtAutres' },
+          // { name: 'Paramètres', path: '/dashboard/parametres' }
         ]
         : [
           { name: 'Dashboard', path: '/dashboard' },
@@ -112,7 +112,7 @@ const Dashboard = () => {
           { name: 'Caisse', path: '/dashboard/depensesObligatoiresDashboard' },
           { name: 'Mois prochain', path: '/dashboard/dashboardMontants' },
           { name: 'AutreMontant', path: '/dashboard/autreMontant' },
-          { name: 'Total', path: '/dashboard/paiementsEtAutres' },
+          // { name: 'Total', path: '/dashboard/paiementsEtAutres' },
         ];
     setMenu(newMenu);
   }, [user]);

@@ -5,6 +5,7 @@ import { isFormationFinishedByDate } from '../utils/formationUtils';
 import { FaSearch, FaPlus, FaTimes, FaChevronDown, FaChevronUp, FaMoneyBillWave, FaGraduationCap, FaSpinner, FaExclamationTriangle, FaCheckCircle, FaChartBar, FaBuilding, FaBook } from "react-icons/fa";
 import RefreshButton from '../components/RefreshButton';
 import { API_URL } from '../config';
+import SearchableSelect from '../components/SearchableSelect';
 
 const generateMoisFormation = (dateInscription, duree) => {
   const dureeFloat = parseFloat(duree);
@@ -755,10 +756,13 @@ const Inscriptions = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
           <div className="flex gap-2 w-full">
             {user?.role !== 'gerant' && (
-              <select value={selectedCentre} onChange={(e) => { setSelectedCentre(e.target.value); setCurrentPage(1); }} className="p-2 border border-gray-300 rounded-lg text-sm bg-white">
-                <option value="">Tous les centres</option>
-                {centres.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-              </select>
+              <SearchableSelect
+                placeholder="Tous les centres"
+                options={[{ value: '', label: 'Tous les centres' }, ...centres.map(c => ({ value: c.id, label: c.nom }))]}
+                value={selectedCentre}
+                onChange={(val) => { setSelectedCentre(val); setCurrentPage(1); }}
+                className="w-full text-sm"
+              />
             )}
             <select value={selectedFormation} onChange={(e) => { setSelectedFormation(e.target.value); setCurrentPage(1); }} className="p-2 border border-gray-300 rounded-lg text-sm bg-white flex-1">
               <option value="">Toutes les formations</option>

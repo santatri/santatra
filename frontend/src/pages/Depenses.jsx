@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/authContext';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiChevronLeft, FiChevronRight, FiX, FiCalendar, FiMapPin } from 'react-icons/fi';
 import { API_URL } from '../config';
+import SearchableSelect from '../components/SearchableSelect';
 
 const depenseTypes = ['salaire', 'loyer', 'eau', 'électricité', 'fournitures', 'autre'];
 
@@ -586,15 +587,13 @@ export default function Depenses() {
                       disabled
                     />
                   ) : (
-                    <select
+                    <SearchableSelect
+                      placeholder="Choisir centre"
+                      options={centres.map(c => ({ value: c.id, label: c.nom }))}
                       value={form.centre_id}
-                      onChange={(e) => setForm({ ...form, centre_id: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded text-sm"
-                      required
-                    >
-                      <option value="">Choisir centre</option>
-                      {centres.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-                    </select>
+                      onChange={(val) => setForm({ ...form, centre_id: val })}
+                      className="w-full text-sm"
+                    />
                   )}
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/authContext";
 import { API_URL } from '../config';
+import SearchableSelect from '../components/SearchableSelect';
 
 export default function DepensesObligatoiresDashboard() {
   const [depensesCompare, setDepensesCompare] = useState([]);
@@ -497,17 +498,13 @@ export default function DepensesObligatoiresDashboard() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">
                     Centre
                   </label>
-                  <select
+                  <SearchableSelect
+                    placeholder="Sélectionner"
+                    options={centres.map(c => ({ value: c.id.toString(), label: c.nom }))}
                     value={form.centre_id}
-                    onChange={(e) => setForm({ ...form, centre_id: e.target.value })}
-                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Sélectionner</option>
-                    {centres.map((c) => (
-                      <option key={c.id} value={c.id.toString()}>{c.nom}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setForm({ ...form, centre_id: val })}
+                    className="w-full text-xs sm:text-sm"
+                  />
                 </div>
 
                 <div>
