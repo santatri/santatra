@@ -14,7 +14,10 @@ export const validRoutes = {
     '/dashboard/depenses',
     '/dashboard/parametres',
     '/dashboard/livres',
-    '/dashboard/autres-montants'
+    '/dashboard/autres-montants',
+    // '/dashboard/paiementsEtAutres',
+    '/dashboard/examens'
+
 
   ],
   gerant: [
@@ -25,7 +28,9 @@ export const validRoutes = {
     '/dashboard/send-mail',
     '/dashboard/dashboardMontants',
     '/dashboard/depensesObligatoiresDashboard',
-    '/dashboard/autres-montants'
+    '/dashboard/autres-montants',
+    '/dashboard/examens'
+
     
   ]
 };

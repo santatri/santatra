@@ -66,7 +66,9 @@ const Dashboard = () => {
     'AutreMontant': <FiTrendingDown className="w-4 h-4" />,
     'Mois prochain': <FiCreditCard className="w-4 h-4" />,
     'Caisse': <FiDollarSign className="w-4 h-4" />,
-    'PaiementsEtAutres': <FiDollarSign className="w-4 h-4" />
+    'PaiementsEtAutres': <FiDollarSign className="w-4 h-4" />,
+    'Examens': <FiBook className="w-4 h-4" />
+    
   };
 
   // Build menu based on role
@@ -89,6 +91,7 @@ const Dashboard = () => {
         { name: 'Mois prochain', path: '/dashboard/dashboardMontants' },
         { name: 'AutreMontant', path: '/dashboard/autreMontant' },
         { name: 'Total', path: '/dashboard/paiementsEtAutres' },
+        { name: 'Examens', path: '/dashboard/examens' },
         { name: 'Paramètres', path: '/dashboard/parametres' }
       ]
       : user.role === 'dir'
@@ -101,6 +104,7 @@ const Dashboard = () => {
           { name: 'Caisse', path: '/dashboard/depensesObligatoiresDashboard' },
           { name: 'Mois prochain', path: '/dashboard/dashboardMontants' },
           { name: 'AutreMontant', path: '/dashboard/autreMontant' },
+          { name: 'Examens', path: '/dashboard/examens' },
           // { name: 'Total', path: '/dashboard/paiementsEtAutres' },
           // { name: 'Paramètres', path: '/dashboard/parametres' }
         ]
@@ -112,6 +116,7 @@ const Dashboard = () => {
           { name: 'Caisse', path: '/dashboard/depensesObligatoiresDashboard' },
           { name: 'Mois prochain', path: '/dashboard/dashboardMontants' },
           { name: 'AutreMontant', path: '/dashboard/autreMontant' },
+          { name: 'Examens', path: '/dashboard/examens' },
           // { name: 'Total', path: '/dashboard/paiementsEtAutres' },
         ];
     setMenu(newMenu);

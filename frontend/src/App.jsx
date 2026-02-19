@@ -22,6 +22,7 @@ import Parametres from './pages/Parametres';
 import Livres from './pages/Livres';
 import AutreMontant from './pages/AutreMontant';
 import PaiementsEtAutres from './pages/PaiementsEtAutres';
+import Examen from './pages/examen';
 
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
             <Route path="parametres" element={<Parametres />} />
             <Route path="autreMontant" element={<AutreMontant />} />
             <Route path="paiementsEtAutres" element={<PaiementsEtAutres />} />
+            <Route path="examens" element={<Examen />} />
           </Route>
 
           {/* Redirection des routes inconnues */}
