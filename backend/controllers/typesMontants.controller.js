@@ -1,7 +1,7 @@
 const { pool } = require('../db');
 
 const createTypeMontant = async (req, res) => {
-  const { code, libelle, description } = req.body;
+  const { code, libelle, description, montant } = req.body;
 
   try {
     // Validation
@@ -10,6 +10,7 @@ const createTypeMontant = async (req, res) => {
         message: 'Code et libellé sont obligatoires' 
       });
     }
+    // Le montant peut être null ou 0
 
     // Vérifier si le code existe déjà
     const existing = await pool.query(
@@ -22,10 +23,10 @@ const createTypeMontant = async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO types_montants (code, libelle, description)
-       VALUES ($1, $2, $3)
+      `INSERT INTO types_montants (code, libelle, description, montant)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [code, libelle, description || null]
+      [code, libelle, description || null, montant != null ? parseFloat(montant) : null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -78,7 +79,7 @@ const getTypeMontantById = async (req, res) => {
 
 const updateTypeMontant = async (req, res) => {
   const { id } = req.params;
-  const { code, libelle, description } = req.body;
+  const { code, libelle, description, montant } = req.body;
 
   try {
     // Vérifier si le type existe
@@ -107,10 +108,11 @@ const updateTypeMontant = async (req, res) => {
       `UPDATE types_montants 
        SET code = COALESCE($1, code),
            libelle = COALESCE($2, libelle),
-           description = COALESCE($3, description)
-       WHERE id = $4
+           description = COALESCE($3, description),
+           montant = COALESCE($4, montant)
+       WHERE id = $5
        RETURNING *`,
-      [code, libelle, description, id]
+      [code, libelle, description, montant != null ? parseFloat(montant) : null, id]
     );
 
     res.json(result.rows[0]);

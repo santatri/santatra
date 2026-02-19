@@ -8,7 +8,6 @@ const createMontantAutre = async (req, res) => {
     type_montant_id,
     centre_id,
     etudiant_id,
-    montant,
     reference,
     commentaire,
     date_paiement,
@@ -17,9 +16,9 @@ const createMontantAutre = async (req, res) => {
 
   try {
     // Validation
-    if (!type_montant_id || !montant || !date_paiement) {
+    if (!type_montant_id || !date_paiement) {
       return res.status(400).json({
-        message: 'Type, montant et date de paiement sont obligatoires'
+        message: 'Type et date de paiement sont obligatoires'
       });
     }
 
@@ -57,14 +56,13 @@ const createMontantAutre = async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO montants_autres
-      (type_montant_id, centre_id, etudiant_id, montant, reference, commentaire, date_paiement)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      (type_montant_id, centre_id, etudiant_id, reference, commentaire, date_paiement)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *`,
       [
         type_montant_id,
         centre_id || null,
         etudiant_id || null,
-        parseFloat(montant),
         reference || null,
         commentaire || null,
         date_paiement
@@ -113,7 +111,10 @@ const createMontantAutre = async (req, res) => {
             }
           }
 
-          const montantStr = Number(montant).toLocaleString('fr-FR');
+          // Récupérer le montant depuis types_montants
+          const montantTypeRes = await pool.query('SELECT montant FROM types_montants WHERE id = $1', [type_montant_id]);
+          const montantType = montantTypeRes.rows[0]?.montant || 0;
+          const montantStr = Number(montantType).toLocaleString('fr-FR');
           const typeLabel = info.type_libelle;
           const etudiantLabel = info.etudiant_nom ? `${info.etudiant_prenom} ${info.etudiant_nom}` : 'Non spécifié';
           const centreLabel = info.centre_nom || 'Non spécifié';
@@ -189,7 +190,6 @@ const getMontantsAutres = async (req, res) => {
     let query = `
       SELECT 
         ma.id,
-        ma.montant,
         ma.date_paiement,
         ma.reference,
         ma.commentaire,
@@ -197,6 +197,7 @@ const getMontantsAutres = async (req, res) => {
         ma.type_montant_id,
         ma.etudiant_id,
         COALESCE(tm.libelle, 'Type inconnu') AS type_montant,
+        tm.montant AS montant,
         COALESCE(c.nom, 'Non spécifié') AS centre,
         COALESCE(CONCAT(e.nom, ' ', e.prenom), 'Non spécifié') AS etudiant
       FROM montants_autres ma
@@ -246,8 +247,15 @@ const getMontantAutreById = async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        ma.*,
+        ma.id,
+        ma.date_paiement,
+        ma.reference,
+        ma.commentaire,
+        ma.centre_id,
+        ma.type_montant_id,
+        ma.etudiant_id,
         tm.libelle AS type_montant,
+        tm.montant AS montant,
         c.nom AS centre_nom,
         CONCAT(e.nom, ' ', e.prenom) AS etudiant_nom
       FROM montants_autres ma
@@ -277,7 +285,6 @@ const updateMontantAutre = async (req, res) => {
     type_montant_id,
     centre_id,
     etudiant_id,
-    montant,
     reference,
     commentaire,
     date_paiement
@@ -299,17 +306,15 @@ const updateMontantAutre = async (req, res) => {
        SET type_montant_id = $1,
            centre_id = $2,
            etudiant_id = $3,
-           montant = $4,
-           reference = $5,
-           commentaire = $6,
-           date_paiement = $7
-       WHERE id = $8
+           reference = $4,
+           commentaire = $5,
+           date_paiement = $6
+       WHERE id = $7
        RETURNING *`,
       [
         type_montant_id,
         centre_id || null,
         etudiant_id || null,
-        parseFloat(montant),
         reference || null,
         commentaire || null,
         date_paiement,

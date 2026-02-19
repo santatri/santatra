@@ -44,12 +44,11 @@ const AutreMontant = () => {
 
   // Formulaires
   const [formData, setFormData] = useState({
-    type: { code: '', libelle: '', description: '' },
+    type: { code: '', libelle: '', description: '', montant: '' },
     montant: {
       type_montant_id: '',
       centre_id: user?.role === 'gerant' ? user.centre_id : '',
       etudiant_id: '',
-      montant: '',
       reference: '',
       commentaire: '',
       date_paiement: new Date().toISOString().split('T')[0],
@@ -242,7 +241,7 @@ const AutreMontant = () => {
     if (type === 'type') {
       setFormData(prev => ({
         ...prev,
-        type: { code: item.code, libelle: item.libelle, description: item.description || '' }
+        type: { code: item.code, libelle: item.libelle, description: item.description || '', montant: item.montant || '' }
       }));
       setActiveTab('types');
     } else {
@@ -252,7 +251,6 @@ const AutreMontant = () => {
           type_montant_id: item.type_montant_id || item.type_montant,
           centre_id: item.centre_id || (user?.role === 'gerant' ? user.centre_id : ''),
           etudiant_id: item.etudiant_id || '',
-          montant: item.montant,
           reference: item.reference || '',
           commentaire: item.commentaire || '',
           date_paiement: item.date_paiement ?
@@ -372,6 +370,39 @@ const AutreMontant = () => {
         </div>
 
         {/* Tabs compacts */}
+              {/* Filtres avancés */}
+              {activeTab === 'montants' && (
+                <div className="flex flex-wrap gap-2 mt-2 mb-3">
+                  <div className="w-40">
+                    <SearchableSelect
+                      label="Centre"
+                      placeholder="Filtrer par centre..."
+                      options={centres.map(c => ({ value: c.id, label: c.nom }))}
+                      value={filterCentre}
+                      onChange={value => {
+                        setFilterCentre(value);
+                        setFilterEtudiant(''); // reset étudiant si centre change
+                      }}
+                      isClearable
+                    />
+                  </div>
+                  <div className="w-40">
+                    <SearchableSelect
+                      label="Étudiant"
+                      placeholder="Filtrer par étudiant..."
+                      options={(() => {
+                        if (filterCentre) {
+                          return etudiants.filter(e => e.centre_id === parseInt(filterCentre)).map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}` }));
+                        }
+                        return etudiants.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}` }));
+                      })()}
+                      value={filterEtudiant}
+                      onChange={value => setFilterEtudiant(value)}
+                      isClearable
+                    />
+                  </div>
+                </div>
+              )}
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('montants')}
@@ -574,18 +605,13 @@ const AutreMontant = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Montant *</label>
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={formData.montant.montant}
-                      onChange={e => setFormData(prev => ({
-                        ...prev,
-                        montant: { ...prev.montant, montant: e.target.value }
-                      }))}
-                      className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      required
-                    />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Montant</label>
+                    <div className="w-full text-xs border border-gray-100 rounded px-2 py-1.5 bg-gray-50">
+                      {(() => {
+                        const selectedType = types.find(t => t.id === parseInt(formData.montant.type_montant_id));
+                        return selectedType ? formatCurrency(selectedType.montant) : '-';
+                      })()}
+                    </div>
                   </div>
 
                   <div>
@@ -679,7 +705,7 @@ const AutreMontant = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Code *</label>
                     <input
@@ -704,6 +730,21 @@ const AutreMontant = () => {
                       onChange={e => setFormData(prev => ({
                         ...prev,
                         type: { ...prev.type, libelle: e.target.value }
+                      }))}
+                      className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Montant *</label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={formData.type.montant}
+                      onChange={e => setFormData(prev => ({
+                        ...prev,
+                        type: { ...prev.type, montant: e.target.value }
                       }))}
                       className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       required
@@ -864,9 +905,14 @@ const AutreMontant = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-medium text-gray-900 text-sm">{type.libelle}</h4>
-                      <code className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                        {type.code}
-                      </code>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded inline-block">
+                          {type.code}
+                        </code>
+                        <span className="text-xs text-green-700 bg-green-50 px-1.5 py-0.5 rounded inline-block">
+                          {formatCurrency(type.montant)}
+                        </span>
+                      </div>
                     </div>
                     {user?.role === 'admin' && (
                       <div className="flex gap-1">
