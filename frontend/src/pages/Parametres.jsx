@@ -178,7 +178,7 @@ const Parametres = () => {
                 <FiDatabase className="text-blue-600" size={24} />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Sauvegarde de sécurité</h2>
+                <h2 className="text-base font-semibold text-gray-900">Sauvegarde de sécurité ALIKA</h2>
                 <p className="text-xs text-gray-500">Téléchargez une copie complète de la base de données (format SQL)</p>
               </div>
             </div>
