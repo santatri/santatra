@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from '../context/authContext';
-import { FaPlus, FaEdit, FaTrash, FaTimes, FaSearch, FaUndo } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaSearch, FaUndo, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { API_URL } from '../config';
 
-// Composant réutilisable : champ de recherche avec suggestions
+// Composant réutilisable : champ de recherche avec suggestions (amélioré)
 const SearchableSelect = ({ options, value, onChange, placeholder, required = false }) => {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -49,7 +49,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required = fa
     if (value && selectedLabel && !search) {
       setSearch(selectedLabel);
     }
-    // eslint-disable-next-line
   }, [value, selectedLabel, search]);
 
   return (
@@ -60,17 +59,17 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required = fa
         onChange={handleInputChange}
         onFocus={() => setShowSuggestions(true)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm bg-white/50 backdrop-blur-sm"
         required={required}
         autoComplete="off"
       />
       {showSuggestions && filteredOptions.length > 0 && (
-        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto backdrop-blur-sm">
           {filteredOptions.map(opt => (
             <li
               key={opt.value}
               onClick={() => handleSelect(opt)}
-              className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+              className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm transition-colors"
             >
               {opt.label}
             </li>
@@ -78,7 +77,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required = fa
         </ul>
       )}
       {showSuggestions && filteredOptions.length === 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-2 text-sm text-gray-500">
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm text-gray-500">
           Aucun résultat
         </div>
       )}
@@ -91,7 +90,7 @@ const Examen = () => {
   const [inscriptions, setInscriptions] = useState([]);
   const [paiements, setPaiements] = useState([]);
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true); // eslint-disable-line no-unused-vars
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -100,6 +99,7 @@ const Examen = () => {
   const [editingPaiementId, setEditingPaiementId] = useState(null);
   const [editPaiementDate, setEditPaiementDate] = useState("");
   const [activeTab, setActiveTab] = useState('paiements');
+  const [showFilters, setShowFilters] = useState(false); // pour mobile
   const formRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -181,7 +181,6 @@ const Examen = () => {
     fetchExamens();
     fetchPaiements();
     fetchInscriptions();
-    // eslint-disable-next-line
   }, []);
 
   // ===================== Handlers =====================
@@ -405,17 +404,17 @@ const Examen = () => {
   }, [filteredPaiements, examens]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-6">
       {/* En-tête avec titre et onglets */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Examens & Paiements</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Examens & Paiements</h1>
         
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200/80">
           <button
             onClick={() => setActiveTab('examens')}
-            className={`py-2 px-4 font-medium text-sm focus:outline-none transition-colors ${
+            className={`py-2 px-4 font-medium text-sm md:text-base focus:outline-none transition-all relative ${
               activeTab === 'examens'
-                ? 'text-blue-600 border-b-2 border-blue-600'
+                ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600 after:rounded-t-full'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -423,9 +422,9 @@ const Examen = () => {
           </button>
           <button
             onClick={() => setActiveTab('paiements')}
-            className={`py-2 px-4 font-medium text-sm focus:outline-none transition-colors ${
+            className={`py-2 px-4 font-medium text-sm md:text-base focus:outline-none transition-all relative ${
               activeTab === 'paiements'
-                ? 'text-blue-600 border-b-2 border-blue-600'
+                ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600 after:rounded-t-full'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -436,13 +435,13 @@ const Examen = () => {
 
       {/* Message flash */}
       {message && (
-        <div className={`mb-4 p-4 rounded-lg text-sm flex items-center justify-between ${
+        <div className={`mb-4 p-4 rounded-xl text-sm flex items-center justify-between shadow-sm ${
           message.includes('Erreur') 
             ? 'bg-red-50 text-red-800 border border-red-200' 
             : 'bg-green-50 text-green-800 border border-green-200'
         }`}>
           <span>{message}</span>
-          <button onClick={() => setMessage('')} className="text-gray-500 hover:text-gray-700">
+          <button onClick={() => setMessage('')} className="text-gray-500 hover:text-gray-700 p-1">
             <FaTimes />
           </button>
         </div>
@@ -455,23 +454,23 @@ const Examen = () => {
             <div className="mb-4 flex justify-end">
               <button
                 onClick={() => setShowForm(!showForm)}
-                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-3 rounded-xl text-sm font-medium transition-all shadow-md hover:shadow-lg active:scale-95"
               >
-                <FaPlus className="text-xs" /> <span>Nouvel examen</span>
+                <FaPlus /> <span>Nouvel examen</span>
               </button>
             </div>
           )}
 
           {user && user.role === 'admin' && showForm && (
-            <div ref={formRef} className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-5">
-              <h3 className="text-lg font-medium text-gray-800 mb-4">{editingId ? 'Modifier l\'examen' : 'Nouvel examen'}</h3>
+            <div ref={formRef} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 mb-6 p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{editingId ? 'Modifier l\'examen' : 'Nouvel examen'}</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <input
                   name="nom"
                   value={formData.nom}
                   onChange={handleInputChange}
                   placeholder="Nom de l'examen"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
                   required
                 />
                 <input
@@ -481,7 +480,7 @@ const Examen = () => {
                   placeholder="Montant (Ar)"
                   type="number"
                   step="0.01"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
                   required
                 />
                 <input
@@ -489,28 +488,28 @@ const Examen = () => {
                   value={formData.session}
                   onChange={handleInputChange}
                   placeholder="Session (ex: 2025)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
                 />
                 <input
                   name="date_examen"
                   value={formData.date_examen}
                   onChange={handleInputChange}
                   type="date"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
                   required
                 />
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button
                     type="submit"
                     disabled={loadingAction}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 rounded-xl font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                   >
                     {loadingAction ? 'Enregistrement...' : 'Enregistrer'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors"
+                    className="px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-colors"
                   >
                     Annuler
                   </button>
@@ -520,42 +519,51 @@ const Examen = () => {
           )}
 
           {/* Filtres examens */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-            <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <FaSearch className="text-gray-400" /> Filtrer les examens
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                type="text"
-                placeholder="Rechercher par nom"
-                value={examenFilterNom}
-                onChange={(e) => setExamenFilterNom(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
-              <SearchableSelect
-                options={sessionOptions}
-                value={examenFilterSession}
-                onChange={setExamenFilterSession}
-                placeholder="Rechercher une session"
-              />
-            </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200 p-4 mb-4">
             <button
-              onClick={() => { setExamenFilterNom(''); setExamenFilterSession(''); }}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              onClick={() => setShowFilters(!showFilters)}
+              className="md:hidden flex items-center justify-between w-full text-left font-medium text-gray-700"
             >
-              <FaUndo /> Réinitialiser les filtres
+              <span className="flex items-center gap-2"><FaSearch className="text-gray-400" /> Filtrer les examens</span>
+              {showFilters ? <FaChevronUp /> : <FaChevronDown />}
             </button>
+            <div className={`${showFilters ? 'block' : 'hidden'} md:block mt-3 md:mt-0`}>
+              <h3 className="hidden md:flex font-medium text-gray-700 mb-3 items-center gap-2">
+                <FaSearch className="text-gray-400" /> Filtrer les examens
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom"
+                  value={examenFilterNom}
+                  onChange={(e) => setExamenFilterNom(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
+                />
+                <SearchableSelect
+                  options={sessionOptions}
+                  value={examenFilterSession}
+                  onChange={setExamenFilterSession}
+                  placeholder="Rechercher une session"
+                />
+              </div>
+              <button
+                onClick={() => { setExamenFilterNom(''); setExamenFilterSession(''); }}
+                className="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+              >
+                <FaUndo /> Réinitialiser les filtres
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Liste des examens</h2>
             {filteredExamens.length === 0 ? (
-              <p className="text-center py-8 text-gray-400 bg-white rounded-xl border border-gray-200">Aucun examen ne correspond aux filtres</p>
+              <p className="text-center py-8 text-gray-400 bg-white/80 rounded-2xl border border-gray-200">Aucun examen ne correspond aux filtres</p>
             ) : (
               paginatedExamens.map(examen => (
                 <div
                   key={examen.id}
-                  className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:shadow-md transition-shadow"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:shadow-lg transition-all duration-200"
                 >
                   <div className="space-y-1">
                     <h4 className="font-semibold text-gray-900 text-lg">{examen.nom}</h4>
@@ -568,14 +576,14 @@ const Examen = () => {
                     <div className="flex items-center gap-2 self-end sm:self-center">
                       <button
                         onClick={() => handleEdit(examen)}
-                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-colors"
                         title="Modifier"
                       >
                         <FaEdit />
                       </button>
                       <button
                         onClick={() => handleDelete(examen.id)}
-                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-colors"
                         title="Supprimer"
                       >
                         <FaTrash />
@@ -591,7 +599,7 @@ const Examen = () => {
                 <button
                   onClick={() => setExamenCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={examenCurrentPage === 1}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 >
                   Précédent
                 </button>
@@ -601,7 +609,7 @@ const Examen = () => {
                 <button
                   onClick={() => setExamenCurrentPage(prev => Math.min(prev + 1, totalExamenPages))}
                   disabled={examenCurrentPage === totalExamenPages}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 >
                   Suivant
                 </button>
@@ -616,7 +624,7 @@ const Examen = () => {
         <div>
           {/* Tableau de bord admin : total montant */}
           {user && user.role === 'admin' && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-4">
+            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 shadow-sm">
               <span className="font-semibold text-blue-800 text-lg">Total encaissé (filtres actifs) :</span>
               <span className="font-bold text-2xl text-blue-900">{totalMontantPaiements.toLocaleString('fr-FR')} Ar</span>
             </div>
@@ -624,15 +632,15 @@ const Examen = () => {
           <div className="mb-4 flex justify-end">
             <button
               onClick={() => setShowPaiementForm(!showPaiementForm)}
-              className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-5 py-3 rounded-xl text-sm font-medium transition-all shadow-md hover:shadow-lg active:scale-95"
             >
-              <FaPlus className="text-xs" /> <span>Nouveau paiement</span>
+              <FaPlus /> <span>Nouveau paiement</span>
             </button>
           </div>
 
           {showPaiementForm && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-5">
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Nouveau paiement</h3>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 mb-6 p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Nouveau paiement</h3>
               <form onSubmit={handlePaiementSubmit} className="space-y-4">
                 <SearchableSelect
                   options={inscriptionOptions}
@@ -653,21 +661,21 @@ const Examen = () => {
                   name="date_paiement"
                   value={paiementData.date_paiement}
                   readOnly
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-100/50 cursor-not-allowed"
                   required
                 />
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button
                     type="submit"
                     disabled={loadingAction}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 rounded-xl font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                   >
                     {loadingAction ? 'Enregistrement...' : 'Enregistrer'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowPaiementForm(false)}
-                    className="px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors"
+                    className="px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-colors"
                   >
                     Annuler
                   </button>
@@ -677,106 +685,116 @@ const Examen = () => {
           )}
 
           {/* Filtres paiements */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-            <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <FaSearch className="text-gray-400" /> Filtrer les paiements
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <input
-                type="text"
-                placeholder="Étudiant (nom ou prénom)"
-                value={paiementFilterEtudiant}
-                onChange={(e) => setPaiementFilterEtudiant(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
-              <SearchableSelect
-                options={centreOptions}
-                value={paiementFilterCentre}
-                onChange={setPaiementFilterCentre}
-                placeholder="Rechercher un centre"
-              />
-              <SearchableSelect
-                options={formationOptions}
-                value={paiementFilterFormation}
-                onChange={setPaiementFilterFormation}
-                placeholder="Rechercher une formation"
-              />
-              <SearchableSelect
-                options={examenOptions}
-                value={paiementFilterExamenId}
-                onChange={setPaiementFilterExamenId}
-                placeholder="Rechercher un examen"
-              />
-              <input
-                type="date"
-                placeholder="Date début"
-                value={paiementDateDebut}
-                onChange={(e) => setPaiementDateDebut(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
-              <input
-                type="date"
-                placeholder="Date fin"
-                value={paiementDateFin}
-                onChange={(e) => setPaiementDateFin(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
-            </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200 p-4 mb-4">
             <button
-              onClick={resetPaiementFilters}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              onClick={() => setShowFilters(!showFilters)}
+              className="md:hidden flex items-center justify-between w-full text-left font-medium text-gray-700"
             >
-              <FaUndo /> Réinitialiser les filtres
+              <span className="flex items-center gap-2"><FaSearch className="text-gray-400" /> Filtrer les paiements</span>
+              {showFilters ? <FaChevronUp /> : <FaChevronDown />}
             </button>
+            <div className={`${showFilters ? 'block' : 'hidden'} md:block mt-3 md:mt-0`}>
+              <h3 className="hidden md:flex font-medium text-gray-700 mb-3 items-center gap-2">
+                <FaSearch className="text-gray-400" /> Filtrer les paiements
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  placeholder="Étudiant (nom ou prénom)"
+                  value={paiementFilterEtudiant}
+                  onChange={(e) => setPaiementFilterEtudiant(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
+                />
+                <SearchableSelect
+                  options={centreOptions}
+                  value={paiementFilterCentre}
+                  onChange={setPaiementFilterCentre}
+                  placeholder="Rechercher un centre"
+                />
+                <SearchableSelect
+                  options={formationOptions}
+                  value={paiementFilterFormation}
+                  onChange={setPaiementFilterFormation}
+                  placeholder="Rechercher une formation"
+                />
+                <SearchableSelect
+                  options={examenOptions}
+                  value={paiementFilterExamenId}
+                  onChange={setPaiementFilterExamenId}
+                  placeholder="Rechercher un examen"
+                />
+                <input
+                  type="date"
+                  placeholder="Date début"
+                  value={paiementDateDebut}
+                  onChange={(e) => setPaiementDateDebut(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
+                />
+                <input
+                  type="date"
+                  placeholder="Date fin"
+                  value={paiementDateFin}
+                  onChange={(e) => setPaiementDateFin(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
+                />
+              </div>
+              <button
+                onClick={resetPaiementFilters}
+                className="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+              >
+                <FaUndo /> Réinitialiser les filtres
+              </button>
+            </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-5">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Paiements des droits d'examen</h3>
             {filteredPaiements.length === 0 ? (
               <p className="text-center py-8 text-gray-400">Aucun paiement ne correspond aux filtres</p>
             ) : (
               <>
-                <div className="overflow-x-auto -mx-5 px-5">
+                {/* Version Desktop : Tableau */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="bg-gray-100 border-b border-gray-200">
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Étudiant</th>
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Centre</th>
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Formation</th>
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Examen</th>
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Session</th>
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Date paiement</th>
-                        <th className="px-3 py-3 text-left font-medium text-gray-700">Montant</th>
-                        {user && user.role === 'admin' && <th className="px-3 py-3 text-left font-medium text-gray-700">Actions</th>}
+                      <tr className="bg-gray-100/80 border-b border-gray-200">
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Étudiant</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Centre</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Formation</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Examen</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Session</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Date paiement</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700">Montant</th>
+                        {user && user.role === 'admin' && <th className="px-4 py-3 text-left font-medium text-gray-700">Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedPaiements.map((p, idx) => (
-                        <tr key={p.id || idx} className="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
-                          <td className="px-3 py-3">{p.etudiant_nom} {p.etudiant_prenom}</td>
-                          <td className="px-3 py-3">{p.centre_nom}</td>
-                          <td className="px-3 py-3">{p.formation_nom}</td>
-                          <td className="px-3 py-3">{examens.find(e => e.id === p.examen_id)?.nom || p.examen_id}</td>
-                          <td className="px-3 py-3">{examens.find(e => e.id === p.examen_id)?.session || ''}</td>
-                          <td className="px-3 py-3">
+                        <tr key={p.id || idx} className="border-b last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                          <td className="px-4 py-3">{p.etudiant_nom} {p.etudiant_prenom}</td>
+                          <td className="px-4 py-3">{p.centre_nom}</td>
+                          <td className="px-4 py-3">{p.formation_nom}</td>
+                          <td className="px-4 py-3">{examens.find(e => e.id === p.examen_id)?.nom || p.examen_id}</td>
+                          <td className="px-4 py-3">{examens.find(e => e.id === p.examen_id)?.session || ''}</td>
+                          <td className="px-4 py-3">
                             {editingPaiementId === p.id ? (
                               <input
                                 type="date"
                                 value={editPaiementDate}
                                 onChange={e => setEditPaiementDate(e.target.value)}
-                                className="border border-gray-300 rounded px-2 py-1 w-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="border border-gray-200 rounded-lg px-2 py-1 w-32 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                               />
                             ) : (
                               p.date_paiement ? new Date(p.date_paiement).toLocaleDateString('fr-FR') : ''
                             )}
                           </td>
-                          <td className="px-3 py-3 font-medium">
+                          <td className="px-4 py-3 font-medium">
                             {examens.find(e => e.id === p.examen_id)?.montant
                               ? parseFloat(examens.find(e => e.id === p.examen_id).montant).toLocaleString('fr-FR') + ' Ar'
                               : ''}
                           </td>
                           {user && user.role === 'admin' && (
-                            <td className="px-3 py-3">
+                            <td className="px-4 py-3">
                               {editingPaiementId === p.id ? (
                                 <div className="flex items-center gap-2">
                                   <button
@@ -845,12 +863,116 @@ const Examen = () => {
                   </table>
                 </div>
 
+                {/* Version Mobile : Cartes */}
+                <div className="md:hidden space-y-3">
+                  {paginatedPaiements.map((p, idx) => (
+                    <div key={p.id || idx} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold text-gray-900">{p.etudiant_nom} {p.etudiant_prenom}</p>
+                          <p className="text-xs text-gray-500">{p.centre_nom} • {p.formation_nom}</p>
+                        </div>
+                        {user && user.role === 'admin' && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingPaiementId(p.id);
+                                setEditPaiementDate(p.date_paiement ? p.date_paiement.slice(0, 10) : "");
+                              }}
+                              className="text-blue-600 p-2"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (window.confirm('Supprimer ce paiement ?')) {
+                                  setLoadingAction(true);
+                                  await fetch(`${API_URL}/api/examens/paiements/${p.id}`, { method: 'DELETE' });
+                                  setMessage('Paiement supprimé');
+                                  fetchPaiements();
+                                  setLoadingAction(false);
+                                }
+                              }}
+                              className="text-red-600 p-2"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Examen:</span>
+                          <p className="font-medium">{examens.find(e => e.id === p.examen_id)?.nom || p.examen_id}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Session:</span>
+                          <p>{examens.find(e => e.id === p.examen_id)?.session || ''}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Date paiement:</span>
+                          {editingPaiementId === p.id ? (
+                            <input
+                              type="date"
+                              value={editPaiementDate}
+                              onChange={e => setEditPaiementDate(e.target.value)}
+                              className="border border-gray-200 rounded-lg px-2 py-1 w-full text-sm"
+                            />
+                          ) : (
+                            <p>{p.date_paiement ? new Date(p.date_paiement).toLocaleDateString('fr-FR') : ''}</p>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Montant:</span>
+                          <p className="font-bold text-green-600">
+                            {examens.find(e => e.id === p.examen_id)?.montant
+                              ? parseFloat(examens.find(e => e.id === p.examen_id).montant).toLocaleString('fr-FR') + ' Ar'
+                              : ''}
+                          </p>
+                        </div>
+                      </div>
+                      {editingPaiementId === p.id && (
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm"
+                            onClick={async () => {
+                              setLoadingAction(true);
+                              const resp = await fetch(`${API_URL}/api/examens/paiements/${p.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ date_paiement: editPaiementDate })
+                              });
+                              if (resp.ok) {
+                                setMessage('Paiement modifié');
+                                setEditingPaiementId(null);
+                                fetchPaiements();
+                              } else {
+                                const err = await resp.json();
+                                setMessage(err.error || 'Erreur modification paiement');
+                              }
+                              setLoadingAction(false);
+                            }}
+                          >
+                            Valider
+                          </button>
+                          <button
+                            className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-sm"
+                            onClick={() => setEditingPaiementId(null)}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
                 {totalPaiementPages > 1 && (
                   <div className="flex justify-center items-center gap-4 mt-4">
                     <button
                       onClick={() => setPaiementCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={paiementCurrentPage === 1}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                     >
                       Précédent
                     </button>
@@ -860,7 +982,7 @@ const Examen = () => {
                     <button
                       onClick={() => setPaiementCurrentPage(prev => Math.min(prev + 1, totalPaiementPages))}
                       disabled={paiementCurrentPage === totalPaiementPages}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                     >
                       Suivant
                     </button>

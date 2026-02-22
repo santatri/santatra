@@ -111,6 +111,7 @@ exports.getPaiementsByInscription = async (req, res) => {
 };
 
 const mailController = require('./mailController');
+const pdfService = require('../services/pdfService');
 const DIRECTION_EMAIL = process.env.EMAIL_DIRECTION || process.env.DIRECTION_EMAIL || process.env.EMAIL_USER || null;
 exports.createPaiementExamen = async (req, res) => {
   const { inscription_id, examen_id, date_paiement } = req.body;
@@ -159,10 +160,28 @@ exports.createPaiementExamen = async (req, res) => {
         // Email à l'étudiant
         if (etudiant.email) {
           try {
+            // Générer le PDF du reçu
+            const pdfBuffer = await pdfService.generateReceiptBuffer({
+              prenom: etudiant.prenom,
+              nom: etudiant.nom,
+              centre_nom: etudiant.centre_nom,
+              formation_nom: formation.nom || '',
+              type_paiement: 'examen',
+              montant: examen.montant,
+              date_paiement: date_paiement || new Date().toISOString(),
+              designation: `${examen.nom} (${examen.session || ''})`
+            });
+
             await mailController.sendMailInternal({
               to: etudiant.email,
               subject: 'Confirmation paiement examen',
-              text: `Bonjour ${etudiant.prenom} ${etudiant.nom},\n\nNous confirmons la réception de votre paiement d'examen :\nExamen : ${examen.nom} (${examen.session || ''})\nMontant : ${montantStr} Ar\nCentre : ${etudiant.centre_nom}\n\nMerci pour votre confiance.\nLa Direction`
+              text: `Bonjour ${etudiant.prenom} ${etudiant.nom},\n\nNous confirmons la réception de votre paiement d'examen :\nExamen : ${examen.nom} (${examen.session || ''})\nMontant : ${montantStr} Ar\nCentre : ${etudiant.centre_nom}\n\nVeuillez trouver ci-joint votre reçu de paiement.\n\nMerci pour votre confiance.\nLa Direction`,
+              attachments: [
+                {
+                  filename: 'Recu_Paiement_Examen.pdf',
+                  content: pdfBuffer
+                }
+              ]
             });
           } catch (err) {
             console.error('Erreur envoi mail étudiant (examen):', err.message || err);

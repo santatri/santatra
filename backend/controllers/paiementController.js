@@ -1,5 +1,6 @@
 const { pool } = require('../db');
 const mailController = require('./mailController');
+const pdfService = require('../services/pdfService');
 
 const DIRECTION_EMAIL = process.env.EMAIL_DIRECTION || process.env.DIRECTION_EMAIL || process.env.EMAIL_USER || null;
 
@@ -72,6 +73,14 @@ exports.createPaiement = async (req, res) => {
 
             if (info.email) {
               try {
+                // Générer le PDF
+                const pdfBuffer = await pdfService.generateReceiptBuffer({
+                  ...info,
+                  type_paiement: type_paiement,
+                  montant: montant,
+                  date_paiement: finalDatePaiement
+                });
+
                 await mailController.sendMailInternal({
                   to: info.email,
                   subject: 'Confirmation paiement',
@@ -82,11 +91,18 @@ exports.createPaiement = async (req, res) => {
                   Centre : ${info.centre_nom}
                   Formation : ${info.formation_nom}
 
+                  Veuillez trouver ci-joint votre reçu de paiement.
+
                   Nous vous remercions pour votre confiance et restons à votre disposition pour toute information complémentaire.
 
                   Cordialement,
-                  La Direction de CFPM de Madagascar`
-
+                  La Direction de CFPM de Madagascar`,
+                  attachments: [
+                    {
+                      filename: 'Recu_Paiement.pdf',
+                      content: pdfBuffer
+                    }
+                  ]
                 });
               } catch (err) {
                 console.error('Erreur envoi mail étudiant (droits):', err.message || err);
@@ -179,10 +195,25 @@ exports.createPaiement = async (req, res) => {
 
             if (info.email) {
               try {
+                // Générer le PDF
+                const pdfBuffer = await pdfService.generateReceiptBuffer({
+                  ...info,
+                  type_paiement: type_paiement,
+                  montant: montant,
+                  date_paiement: finalDatePaiement,
+                  designation: mois_paye ? `Mensualité de ${mois_paye}` : undefined
+                });
+
                 await mailController.sendMailInternal({
                   to: info.email,
                   subject: 'Confirmation paiement',
-                  text: `Bonjour ${info.prenom} ${info.nom},\nNous confirmons la réception de votre paiement de ${montantStr} Ar pour ${type_paiement}.\nCentre : ${info.centre_nom}\nFormation : ${info.formation_nom}\nMerci pour votre confiance.\nLa Direction`
+                  text: `Bonjour ${info.prenom} ${info.nom},\nNous confirmons la réception de votre paiement de ${montantStr} Ar pour ${type_paiement}.\nCentre : ${info.centre_nom}\nFormation : ${info.formation_nom}\nVeuillez trouver ci-joint votre reçu de paiement.\nMerci pour votre confiance.\nLa Direction`,
+                  attachments: [
+                    {
+                      filename: 'Recu_Paiement.pdf',
+                      content: pdfBuffer
+                    }
+                  ]
                 });
               } catch (err) {
                 console.error('Erreur envoi mail étudiant (formation):', err.message || err);
@@ -283,10 +314,25 @@ exports.createPaiement = async (req, res) => {
             const livreNom = livre.nom || '';
             if (info.email) {
               try {
+                // Générer le PDF
+                const pdfBuffer = await pdfService.generateReceiptBuffer({
+                  ...info,
+                  type_paiement: type_paiement,
+                  montant: montant,
+                  date_paiement: finalDatePaiement,
+                  designation: livreNom
+                });
+
                 await mailController.sendMailInternal({
                   to: info.email,
                   subject: 'Confirmation achat livre',
-                  text: `Bonjour ${info.prenom} ${info.nom},\n\nNous confirmons la réception de votre paiement de ${montantStr} Ar pour le livre : ${livreNom}.\nFormation : ${info.formation_nom}\n\nCordialement.`
+                  text: `Bonjour ${info.prenom} ${info.nom},\n\nNous confirmons la réception de votre paiement de ${montantStr} Ar pour le livre : ${livreNom}.\nFormation : ${info.formation_nom}\n\nVeuillez trouver ci-joint votre reçu de paiement.\n\nCordialement.`,
+                  attachments: [
+                    {
+                      filename: 'Recu_Paiement.pdf',
+                      content: pdfBuffer
+                    }
+                  ]
                 });
               } catch (err) {
                 console.error('Erreur envoi mail étudiant (livre):', err.message || err);

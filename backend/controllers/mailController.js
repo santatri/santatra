@@ -45,7 +45,7 @@ async function getTransporter() {
 
 async function sendMail(req, res) {
   try {
-    const { to, subject, text, html } = req.body;
+    const { to, subject, text, html, attachments } = req.body;
     if (!to || !subject || (!text && !html)) {
       return res.status(400).json({ message: 'Requière: to, subject et text ou html' });
     }
@@ -57,6 +57,7 @@ async function sendMail(req, res) {
       subject,
       text: text || undefined,
       html: html || undefined,
+      attachments: attachments || undefined
     });
 
     return res.status(200).json({ message: 'Email envoyé', info });
@@ -66,7 +67,7 @@ async function sendMail(req, res) {
   }
 }
 
-async function sendMailInternal({ to, subject, text, html }) {
+async function sendMailInternal({ to, subject, text, html, attachments }) {
   if (!to || !subject || (!text && !html)) {
     throw new Error('Requière: to, subject et text ou html');
   }
@@ -78,6 +79,7 @@ async function sendMailInternal({ to, subject, text, html }) {
     subject,
     text: text || undefined,
     html: html || undefined,
+    attachments: attachments || undefined
   });
 
   return info;

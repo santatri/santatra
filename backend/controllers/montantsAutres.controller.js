@@ -1,5 +1,6 @@
 const { pool } = require('../db');
 const mailController = require('./mailController');
+const { generateReceiptBuffer } = require('../services/pdfService');
 
 const DIRECTION_EMAIL = process.env.EMAIL_DIRECTION || process.env.DIRECTION_EMAIL || process.env.EMAIL_USER || null;
 
@@ -122,6 +123,18 @@ const createMontantAutre = async (req, res) => {
           // Email à l'étudiant
           if (info.etudiant_email) {
             try {
+              // Generate PDF Buffer
+              const pdfBuffer = await generateReceiptBuffer({
+                prenom: info.etudiant_prenom,
+                nom: info.etudiant_nom,
+                centre_nom: info.centre_nom,
+                formation_nom: formationsStr,
+                type_paiement: 'autre', // Use a custom type
+                montant: montantType,
+                date_paiement: date_paiement,
+                designation: typeLabel + (commentaire ? ` - ${commentaire}` : '')
+              });
+
               await mailController.sendMailInternal({
                 to: info.etudiant_email,
                 subject: 'Confirmation paiement',
@@ -134,10 +147,17 @@ const createMontantAutre = async (req, res) => {
                 Formation(s) : ${formationsStr}
                 ${commentaire ? `Note : ${commentaire}` : ''}
                 
+                Vous trouverez ci-joint votre reçu de paiement.
+                
                 Merci pour votre confiance.
                 
                 Cordialement,
-                La Direction`
+                La Direction`,
+                attachments: [{
+                  filename: 'Recu_Paiement.pdf',
+                  content: pdfBuffer,
+                  contentType: 'application/pdf'
+                }]
               });
             } catch (err) {
               console.error('Erreur envoi mail étudiant (autre montant):', err.message || err);
