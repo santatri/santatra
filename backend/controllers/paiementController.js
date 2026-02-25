@@ -534,6 +534,7 @@ exports.getLatestDroits = async (req, res) => {
 };
 
 // Récupérer les retards de paiement de formation
+// Récupérer les retards de paiement de formation
 exports.getRetardsPaiement = async (req, res) => {
   try {
     const { centre_id } = req.query;
@@ -564,6 +565,7 @@ exports.getRetardsPaiement = async (req, res) => {
     `;
 
     const params = [];
+
     if (centre_id) {
       params.push(centre_id);
       query += ` AND e.centre_id = $${params.length}`;
@@ -574,7 +576,6 @@ exports.getRetardsPaiement = async (req, res) => {
     const result = await pool.query(query, params);
     const inscriptions = result.rows;
 
-    // Fetch paiements for all inscriptions
     const insIds = inscriptions.map(i => i.inscription_id);
     if (insIds.length === 0) {
       return res.json([]);
@@ -584,6 +585,7 @@ exports.getRetardsPaiement = async (req, res) => {
       `SELECT * FROM paiements WHERE inscription_id = ANY($1)`,
       [insIds]
     );
+
     const paiementsMap = {};
     paiementsResult.rows.forEach(p => {
       if (!paiementsMap[p.inscription_id]) {
@@ -592,7 +594,8 @@ exports.getRetardsPaiement = async (req, res) => {
       paiementsMap[p.inscription_id].push(p);
     });
 
-    // Helper: generate months from inscription date and duration
+    // ===== Helpers (ON GARDE LES TIENS) =====
+
     const generateMoisFormation = (dateInscription, duree) => {
       const dureeFloat = parseFloat(duree);
       if (dureeFloat <= 0.25) return ["Frais de semaine"];
@@ -604,10 +607,12 @@ exports.getRetardsPaiement = async (req, res) => {
       const start = new Date(dateInscription);
       const list = [];
       const nombreMois = Math.ceil(dureeFloat);
+
       for (let i = 0; i < nombreMois; i++) {
         const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
         list.push(`${months[d.getMonth()]} ${d.getFullYear()}`);
       }
+
       return list;
     };
 
@@ -615,8 +620,10 @@ exports.getRetardsPaiement = async (req, res) => {
       if (!str) return "";
       const parts = str.trim().split(/\s+/);
       if (parts.length < 2) return str;
+
       let [mois, annee] = parts;
       mois = mois.toLowerCase();
+
       const mapping = {
         "janvier": "Janv", "janv": "Janv", "jan": "Janv",
         "février": "Fév", "fevrier": "Fév", "fév": "Fév", "fev": "Fév",
@@ -625,65 +632,88 @@ exports.getRetardsPaiement = async (req, res) => {
         "mai": "Mai",
         "juin": "Juin",
         "juillet": "Juil", "juil": "Juil",
-        "août": "Août", "aout": "Août", "aou": "Août",
+        "août": "Août", "aout": "Août",
         "septembre": "Sept", "sept": "Sept",
         "octobre": "Oct", "oct": "Oct",
         "novembre": "Nov", "nov": "Nov",
-        "décembre": "Déc", "decembre": "Déc", "déc": "Déc", "dec": "Déc"
+        "décembre": "Déc", "decembre": "Déc", "dec": "Déc"
       };
+
       const moisNormalise = mapping[mois] || parts[0];
-      const moisCapitalized = moisNormalise.charAt(0).toUpperCase() + moisNormalise.slice(1);
+      const moisCapitalized =
+        moisNormalise.charAt(0).toUpperCase() + moisNormalise.slice(1);
+
       return `${moisCapitalized} ${annee}`;
     };
 
+    // ===== LOGIQUE RETARD CORRIGÉE =====
+
     const retards = [];
     const aujourd = new Date();
+    const DELAI_TOLERANCE = 1; // 1 jour
 
     inscriptions.forEach(insc => {
       const moisFormation = generateMoisFormation(insc.date_inscription, insc.duree);
-      const paiementsFormation = (paiementsMap[insc.inscription_id] || []).filter(p =>
-        p.type_paiement === 'formation'
-      );
+      const paiementsFormation = (paiementsMap[insc.inscription_id] || [])
+        .filter(p => p.type_paiement === 'formation');
 
       const moisPayes = moisFormation.filter(mois => {
         const moisNorm = normalizeMoisStr(mois);
+
         const paiementsCeMois = paiementsFormation.filter(p => {
           const pMoisNorm = normalizeMoisStr(p.mois_paye);
           return pMoisNorm === moisNorm;
         });
-        const totalPaye = paiementsCeMois.reduce((sum, p) => sum + (parseFloat(p.montant) || 0), 0);
+
+        const totalPaye = paiementsCeMois.reduce(
+          (sum, p) => sum + (parseFloat(p.montant) || 0),
+          0
+        );
+
         return totalPaye >= (insc.frais_mensuel || 0);
       });
 
-      const premierMoisNonPaye = moisFormation.find(mois => !moisPayes.includes(mois));
+      const premierMoisNonPaye =
+        moisFormation.find(mois => !moisPayes.includes(mois));
 
       if (premierMoisNonPaye) {
-        let dateLimitePaiement;
-        if (premierMoisNonPaye.startsWith("Frais de formation")) {
-          const start = new Date(insc.date_inscription);
-          dateLimitePaiement = new Date(start.getFullYear(), start.getMonth() + 1, 5, 23, 59, 59);
-        } else {
-          const [moisStr, anneeStr] = premierMoisNonPaye.split(' ');
-          const moisIndex = ["Janv", "Fév", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"].indexOf(moisStr);
-          const annee = parseInt(anneeStr);
-          dateLimitePaiement = new Date(annee, moisIndex + 1, 5, 23, 59, 59);
+
+        const start = new Date(insc.date_inscription);
+        const moisIndex = moisFormation.indexOf(premierMoisNonPaye);
+
+        // ✅ Date limite = date inscription + moisIndex
+        let dateLimitePaiement = new Date(
+          start.getFullYear(),
+          start.getMonth() + moisIndex,
+          start.getDate(),
+          23,
+          59,
+          59
+        );
+
+        // Sécurisation si mois court (31 → février)
+        if (dateLimitePaiement.getMonth() !== (start.getMonth() + moisIndex) % 12) {
+          dateLimitePaiement = new Date(
+            start.getFullYear(),
+            start.getMonth() + moisIndex + 1,
+            0,
+            23,
+            59,
+            59
+          );
         }
 
-        // DEBUG
-        if (insc.etudiant_id === 2) {
-          console.log(`DEBUG ${insc.nom}:`, {
-            premiere_mois_non_paye: premierMoisNonPaye,
-            date_limite: dateLimitePaiement.toISOString(),
-            aujourd_hui: aujourd.toISOString(),
-            est_en_retard: aujourd > dateLimitePaiement,
-            mois_formation: moisFormation,
-            mois_payes: moisPayes,
-            paiements_formation: paiementsFormation
-          });
-        }
+        // +1 jour de tolérance
+        dateLimitePaiement.setDate(
+          dateLimitePaiement.getDate() + DELAI_TOLERANCE
+        );
 
         if (aujourd > dateLimitePaiement) {
-          const joursRetard = Math.floor((aujourd - dateLimitePaiement) / (1000 * 60 * 60 * 24));
+
+          const joursRetard = Math.floor(
+            (aujourd - dateLimitePaiement) / (1000 * 60 * 60 * 24)
+          );
+
           retards.push({
             etudiant_id: insc.etudiant_id,
             inscription_id: insc.inscription_id,
@@ -709,7 +739,9 @@ exports.getRetardsPaiement = async (req, res) => {
     });
 
     const sorted = retards.sort((a, b) => b.jours_retard - a.jours_retard);
+
     res.json(sorted);
+
   } catch (error) {
     console.error('Erreur getRetardsPaiement:', error);
     res.status(500).json({ error: 'Erreur serveur' });

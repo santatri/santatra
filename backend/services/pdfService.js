@@ -313,7 +313,7 @@ function drawFooter(doc) {
     );
 
   doc.text(
-    'CFPM Madagascar • contact@cfpm.mg • www.cfpm.mg',
+    'CFPM Madagascar • cfpm-de-madagascar.com',
     doc.page.margins.left,
     bottomY + 15,
     {

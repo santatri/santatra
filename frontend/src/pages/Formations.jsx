@@ -492,7 +492,7 @@ const Formations = () => {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formation</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durée</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frais mensuel</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total formation</th>
+                      {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total formation</th> */}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -519,11 +519,11 @@ const Formations = () => {
                             {formatCurrency(f.frais_mensuel)} Ar
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        {/* <td className="px-4 py-3">
                           <div className="text-sm font-semibold text-blue-600">
                             {formatCurrency(f.frais_mensuel * f.duree)} Ar
                           </div>
-                        </td>
+                        </td> */}
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex space-x-2">
                             <button
