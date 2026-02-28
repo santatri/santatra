@@ -173,10 +173,20 @@ const AutreMontant = () => {
 
     try {
       if (activeTab === 'types') {
+        const typeData = { ...formData.type };
+        // Génération automatique du code si nouveau type
+        if (!editingId) {
+          typeData.code = typeData.libelle
+            .toUpperCase()
+            .trim()
+            .replace(/\s+/g, '_')
+            .replace(/[^A-Z0-9_]/g, '') + '_' + Math.random().toString(36).substring(2, 7).toUpperCase();
+        }
+
         if (editingId) {
-          await axios.put(`${API_URL}/api/types-montants/${editingId}`, formData.type);
+          await axios.put(`${API_URL}/api/types-montants/${editingId}`, typeData);
         } else {
-          await axios.post(`${API_URL}/api/types-montants`, formData.type);
+          await axios.post(`${API_URL}/api/types-montants`, typeData);
         }
       } else {
         const submissionData = { ...formData.montant };
@@ -271,7 +281,6 @@ const AutreMontant = () => {
     return montants.filter(montant => {
       const matchesSearch = searchTerm === '' ||
         montant.type_montant?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        montant.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         montant.commentaire?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         montant.etudiant?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -370,39 +379,39 @@ const AutreMontant = () => {
         </div>
 
         {/* Tabs compacts */}
-              {/* Filtres avancés */}
-              {activeTab === 'montants' && (
-                <div className="flex flex-wrap gap-2 mt-2 mb-3">
-                  <div className="w-40">
-                    <SearchableSelect
-                      label="Centre"
-                      placeholder="Filtrer par centre..."
-                      options={centres.map(c => ({ value: c.id, label: c.nom }))}
-                      value={filterCentre}
-                      onChange={value => {
-                        setFilterCentre(value);
-                        setFilterEtudiant(''); // reset étudiant si centre change
-                      }}
-                      isClearable
-                    />
-                  </div>
-                  <div className="w-40">
-                    <SearchableSelect
-                      label="Étudiant"
-                      placeholder="Filtrer par étudiant..."
-                      options={(() => {
-                        if (filterCentre) {
-                          return etudiants.filter(e => e.centre_id === parseInt(filterCentre)).map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}` }));
-                        }
-                        return etudiants.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}` }));
-                      })()}
-                      value={filterEtudiant}
-                      onChange={value => setFilterEtudiant(value)}
-                      isClearable
-                    />
-                  </div>
-                </div>
-              )}
+        {/* Filtres avancés */}
+        {activeTab === 'montants' && (
+          <div className="flex flex-wrap gap-2 mt-2 mb-3">
+            <div className="w-40">
+              <SearchableSelect
+                label="Centre"
+                placeholder="Filtrer par centre..."
+                options={centres.map(c => ({ value: c.id, label: c.nom }))}
+                value={filterCentre}
+                onChange={value => {
+                  setFilterCentre(value);
+                  setFilterEtudiant(''); // reset étudiant si centre change
+                }}
+                isClearable
+              />
+            </div>
+            <div className="w-40">
+              <SearchableSelect
+                label="Étudiant"
+                placeholder="Filtrer par étudiant..."
+                options={(() => {
+                  if (filterCentre) {
+                    return etudiants.filter(e => e.centre_id === parseInt(filterCentre)).map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}` }));
+                  }
+                  return etudiants.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}` }));
+                })()}
+                value={filterEtudiant}
+                onChange={value => setFilterEtudiant(value)}
+                isClearable
+              />
+            </div>
+          </div>
+        )}
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('montants')}
@@ -656,34 +665,19 @@ const AutreMontant = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Référence</label>
-                    <input
-                      type="text"
-                      placeholder="Réf..."
-                      value={formData.montant.reference}
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Commentaire</label>
+                    <textarea
+                      placeholder="Commentaire..."
+                      value={formData.montant.commentaire}
                       onChange={e => setFormData(prev => ({
                         ...prev,
-                        montant: { ...prev.montant, reference: e.target.value }
+                        montant: { ...prev.montant, commentaire: e.target.value }
                       }))}
                       className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      rows="2"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Commentaire</label>
-                  <textarea
-                    placeholder="Commentaire..."
-                    value={formData.montant.commentaire}
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      montant: { ...prev.montant, commentaire: e.target.value }
-                    }))}
-                    className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    rows="2"
-                  />
-                </div>
-
 
                 {formMode === 'create' && (
                   <div className="flex items-center mt-2">
@@ -706,22 +700,7 @@ const AutreMontant = () => {
             ) : (
               <div className="space-y-2">
                 <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Code *</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: FORMAT"
-                      value={formData.type.code}
-                      onChange={e => setFormData(prev => ({
-                        ...prev,
-                        type: { ...prev.type, code: e.target.value }
-                      }))}
-                      className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
+                  <div className="col-span-2">
                     <label className="block text-xs font-medium text-gray-600 mb-1">Libellé *</label>
                     <input
                       type="text"
@@ -834,9 +813,6 @@ const AutreMontant = () => {
                         <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded">
                           {montant.type_montant}
                         </span>
-                        {montant.reference && (
-                          <span className="text-xs text-gray-500 truncate">{montant.reference}</span>
-                        )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-gray-600">
                         <span className="flex items-center gap-1">
@@ -906,9 +882,6 @@ const AutreMontant = () => {
                     <div>
                       <h4 className="font-medium text-gray-900 text-sm">{type.libelle}</h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <code className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded inline-block">
-                          {type.code}
-                        </code>
                         <span className="text-xs text-green-700 bg-green-50 px-1.5 py-0.5 rounded inline-block">
                           {formatCurrency(type.montant)}
                         </span>

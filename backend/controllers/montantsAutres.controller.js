@@ -79,7 +79,7 @@ const createMontantAutre = async (req, res) => {
             SELECT 
               tm.libelle as type_libelle,
               c.nom as centre_nom,
-              e.nom as etudiant_nom, e.prenom as etudiant_prenom, e.email as etudiant_email
+              e.matricule, e.nom as etudiant_nom, e.prenom as etudiant_prenom, e.email as etudiant_email
             FROM types_montants tm
             LEFT JOIN centres c ON c.id = $1
             LEFT JOIN etudiants e ON e.id = $2
@@ -127,6 +127,7 @@ const createMontantAutre = async (req, res) => {
               const pdfBuffer = await generateReceiptBuffer({
                 prenom: info.etudiant_prenom,
                 nom: info.etudiant_nom,
+                matricule: info.matricule,
                 centre_nom: info.centre_nom,
                 formation_nom: formationsStr,
                 type_paiement: 'autre', // Use a custom type

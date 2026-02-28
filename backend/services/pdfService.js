@@ -140,7 +140,7 @@ function drawTitleAndDate(doc, data, y) {
 // ================= STUDENT INFO =================
 
 function drawStudentInfo(doc, data, y) {
-  const boxHeight = 85;
+  const boxHeight = 100; // Augmenté pour le matricule
 
   doc
     .roundedRect(
@@ -172,6 +172,11 @@ function drawStudentInfo(doc, data, y) {
     valueX,
     contentY
   );
+
+  contentY += 18;
+
+  doc.font(FONTS.bold).text('Matricule :', labelX, contentY);
+  doc.font(FONTS.regular).text(data.matricule || '-', valueX, contentY);
 
   contentY += 18;
 

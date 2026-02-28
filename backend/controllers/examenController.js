@@ -150,7 +150,7 @@ exports.createPaiementExamen = async (req, res) => {
       try {
         // Récupérer les infos pour l'email
         const etudiantResult = await pool.query(
-          'SELECT e.prenom, e.nom, e.email, c.nom as centre_nom FROM inscriptions i JOIN etudiants e ON i.etudiant_id = e.id LEFT JOIN centres c ON e.centre_id = c.id WHERE i.id = $1',
+          'SELECT e.prenom, e.nom, e.matricule, e.email, c.nom as centre_nom FROM inscriptions i JOIN etudiants e ON i.etudiant_id = e.id LEFT JOIN centres c ON e.centre_id = c.id WHERE i.id = $1',
           [inscription_id]
         );
         const etudiant = etudiantResult.rows[0] || {};
@@ -164,6 +164,7 @@ exports.createPaiementExamen = async (req, res) => {
             const pdfBuffer = await pdfService.generateReceiptBuffer({
               prenom: etudiant.prenom,
               nom: etudiant.nom,
+              matricule: etudiant.matricule,
               centre_nom: etudiant.centre_nom,
               formation_nom: formation.nom || '',
               type_paiement: 'examen',

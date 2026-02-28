@@ -178,273 +178,249 @@ const Livres = () => {
   }).sort((a, b) => a.nom.localeCompare(b.nom));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3">
-      {/* En-tête compact */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-100 rounded-lg">
-              <FaBook className="text-blue-600 text-sm" />
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-blue-100 italic-prevent">
+      {/* Header Compact Premium */}
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center text-blue-600">
+              <FaBook size={20} />
             </div>
             <div>
-              <h1 className="font-bold text-gray-800 text-base">Livres</h1>
-              <p className="text-xs text-gray-500">
-                {livres.length} livre{livres.length !== 1 ? 's' : ''}
-              </p>
+              <h1 className="text-xl font-black tracking-tight text-slate-800">Catalogue</h1>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[9px] font-bold uppercase tracking-wider border border-blue-100/50">
+                  {livres.length} Ouvrage{livres.length !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
           </div>
+
           <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-1 bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium"
+            onClick={() => {
+              setShowForm(!showForm);
+              if (!showForm) {
+                setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+              }
+            }}
+            className="flex items-center gap-2 bg-slate-900 text-white pl-3.5 pr-4 py-2 rounded-xl text-[11px] font-bold hover:bg-blue-600 transition-all duration-300 shadow-lg shadow-slate-200 active:scale-95"
           >
-            <FaPlus size={12} />
-            <span className="hidden xs:inline">Nouveau</span>
+            <FaPlus size={10} />
+            <span>NOUVEAU</span>
           </button>
         </div>
 
-        {/* Message */}
-        {message && (
-          <div className={`mb-2 p-2 rounded-lg text-xs ${
-            message.includes('Erreur') || message.includes('Supprimé') 
-              ? 'bg-red-50 text-red-700 border border-red-200' 
-              : 'bg-green-50 text-green-700 border border-green-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <span>{message}</span>
-              <button 
-                onClick={() => setMessage('')}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FaTimes size={12} />
+        {/* Messaging Area */}
+        <div className="mt-2 h-8">
+          {message && (
+            <div className={`flex items-center justify-between px-3 py-1.5 rounded-lg border animate-in fade-in slide-in-from-top-1 duration-300 ${message.includes('Erreur') || message.includes('Supprimé')
+              ? 'bg-red-50 text-red-700 border-red-100'
+              : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+              }`}>
+              <span className="text-[10px] font-bold uppercase tracking-wide">{message}</span>
+              <button onClick={() => setMessage('')} className="hover:opacity-60"><FaTimes size={10} /></button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Formulaire Compact */}
+      <div className="max-w-6xl mx-auto px-4">
+        {showForm && (
+          <div ref={formRef} className="bg-white rounded-2xl shadow-xl shadow-slate-200 border border-slate-100 mb-6 overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded flex items-center justify-center text-white ${editingId ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                  {editingId ? <FaEdit size={12} /> : <FaPlus size={12} />}
+                </div>
+                <h3 className="font-bold text-slate-800 text-xs tracking-tight uppercase">
+                  {editingId ? 'Modifier' : 'Ajouter'}
+                </h3>
+              </div>
+              <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600">
+                <FaTimes size={14} />
               </button>
             </div>
+
+            <form onSubmit={handleSubmit} className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-6">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-1">Désignation</label>
+                  <input
+                    type="text"
+                    name="nom"
+                    value={formData.nom}
+                    onChange={handleInputChange}
+                    placeholder="Nom du livre"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all"
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-3">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-1">Prix (AR)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="prix"
+                      value={formData.prix}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className="w-full pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
+                      required
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">AR</span>
+                  </div>
+                </div>
+
+                <div className="md:col-span-3">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-1">Formation</label>
+                  <select
+                    name="formation_id"
+                    value={formData.formation_id}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all"
+                    required
+                  >
+                    <option value="">Choisir...</option>
+                    {formations.map(f => (
+                      <option key={f.id} value={f.id}>{f.nom}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t border-slate-50 mt-4">
+                <button
+                  type="submit"
+                  disabled={loadingAction}
+                  className="flex-[2] bg-blue-600 text-white py-2.5 rounded-lg text-[11px] font-black tracking-widest hover:bg-blue-700 transition-all uppercase disabled:opacity-50"
+                >
+                  {loadingAction ? '...' : editingId ? 'Enregistrer' : 'Ajouter'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-lg text-[11px] font-black tracking-widest hover:bg-slate-200 transition-all"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>
 
-      {/* Formulaire compact */}
-      {showForm && (
-        <div ref={formRef} className="bg-white rounded-xl shadow-sm border border-gray-200 mb-3 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-gray-800 text-sm">
-              {editingId ? 'Modifier le livre' : 'Nouveau livre'}
-            </h3>
-            <button
-              onClick={handleCancel}
-              className="p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-            >
-              <FaTimes size={14} />
-            </button>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-2">
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleInputChange}
-              placeholder="Nom du livre"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              required
-            />
-            
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                name="prix"
-                value={formData.prix}
-                onChange={handleInputChange}
-                placeholder="Prix"
-                step="0.01"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                required
-              />
-              <select
-                name="formation_id"
-                value={formData.formation_id}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                required
-              >
-                <option value="">Formation</option>
-                {formations.map(f => (
-                  <option key={f.id} value={f.id}>{f.nom}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex gap-2 pt-1">
-              <button
-                type="submit"
-                disabled={loadingAction}
-                className="flex-1 bg-green-600 text-white py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition disabled:opacity-50"
-              >
-                {loadingAction ? '...' : 'Enregistrer'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-3 bg-gray-100 text-gray-700 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition"
-              >
-                Annuler
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Barre de recherche et filtres */}
-      <div className="mb-3">
-        <div className="flex gap-2 mb-2">
-          <div className="flex-1 relative">
+      {/* Discovery Area Compact */}
+      <div className="max-w-6xl mx-auto px-4 mb-4">
+        <div className="flex gap-2">
+          <div className="flex-[3] relative">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Rechercher..."
-              className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full h-11 pl-10 pr-3 bg-white border border-slate-200 rounded-xl text-[13px] font-medium shadow-sm focus:border-blue-300 outline-none transition-all"
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
-            <FaSearch className="absolute left-2.5 top-2.5 text-gray-400 text-sm" />
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 border rounded-lg ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-600' : 'border-gray-300 text-gray-600'}`}
-              title="Filtres"
-            >
-              <FaFilter size={14} />
-            </button>
-            <button
-              onClick={fetchLivres}
-              disabled={loading}
-              className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              title="Rafraîchir"
-            >
-              <FaSyncAlt size={14} className={`${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
 
-        {/* Filtres */}
-        {showFilters && (
-          <div className="bg-white border border-gray-300 rounded-lg p-2 mb-2">
+          <div className="hidden sm:block flex-[1.5] relative">
             <select
               value={filterFormation}
               onChange={(e) => setFilterFormation(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full h-11 pl-9 pr-8 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 shadow-sm focus:border-blue-300 outline-none appearance-none transition-all cursor-pointer"
             >
-              <option value="">Toutes les formations</option>
+              <option value="">FORMATION</option>
               {formations.map(f => (
-                <option key={f.id} value={f.id}>{f.nom}</option>
+                <option key={f.id} value={f.id}>{f.nom.toUpperCase()}</option>
               ))}
             </select>
+            <FaFilter className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+          </div>
+
+          <button
+            onClick={fetchLivres}
+            disabled={loading}
+            className="h-11 w-11 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 transition-all disabled:opacity-50"
+          >
+            <FaSyncAlt size={14} className={`${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* List Area Compact */}
+      <div className="max-w-6xl mx-auto px-4 pb-12">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+            <div className="w-8 h-8 border-3 border-slate-100 border-t-blue-500 rounded-full animate-spin"></div>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-widest">Calcul...</p>
+          </div>
+        ) : filteredLivres.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+            <FaBook className="text-slate-100 mx-auto mb-2" size={32} />
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Catalogue Vide</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredLivres.map((livre) => (
+              <div
+                key={livre.id}
+                className="group bg-white rounded-2xl p-3 border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all flex items-center gap-4"
+              >
+                {/* Visual Thumbnail */}
+                <div className="w-14 h-20 bg-slate-50 rounded-lg overflow-hidden relative flex-shrink-0 border border-slate-200/50 flex items-center justify-center">
+                  <FaBook className="text-slate-200 text-xl group-hover:text-blue-200 transition-colors" />
+                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/10"></div>
+                </div>
+
+                {/* Info Center */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase truncate max-w-[150px]">
+                      {getFormationNom(livre.formation_id)}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-black text-slate-800 tracking-tight truncate group-hover:text-blue-600 transition-colors">
+                    {livre.nom.toUpperCase()}
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-medium">#{livre.id} • Ajouté le {new Date(livre.created_at).toLocaleDateString('fr-FR')}</p>
+                </div>
+
+                {/* Compact Pricing */}
+                <div className="px-3 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-center min-w-[100px]">
+                  <p className="text-[8px] font-black text-emerald-500 uppercase mb-0.5">PRIX</p>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <span className="font-black text-emerald-700 text-sm">
+                      {parseFloat(livre.prix).toLocaleString('fr-FR')}
+                    </span>
+                    <span className="text-[9px] font-black text-emerald-500">AR</span>
+                  </div>
+                </div>
+
+                {/* Actions Discrete */}
+                <div className="flex gap-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                  <button
+                    onClick={() => handleEdit(livre)}
+                    className="w-9 h-9 flex items-center justify-center bg-white text-slate-600 rounded-lg hover:text-amber-600 hover:shadow-sm transition-all"
+                    title="EDIT"
+                  >
+                    <FaEdit size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(livre.id)}
+                    className="w-9 h-9 flex items-center justify-center bg-white text-slate-400 hover:text-red-600 hover:shadow-sm transition-all"
+                    title="DELETE"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      {/* Grille des livres - style "bibliothèque" */}
-      {loading ? (
-        <div className="text-center py-6">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-sm text-gray-600">Chargement...</p>
-        </div>
-      ) : filteredLivres.length === 0 ? (
-        <div className="text-center py-6">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-            <FaBook className="text-gray-400 text-base" />
-          </div>
-          <p className="text-gray-700 font-medium text-sm">Aucun livre trouvé</p>
-          <p className="text-gray-500 text-xs mt-1">
-            {searchTerm || filterFormation ? 'Modifiez vos critères' : 'Ajoutez un livre'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {filteredLivres.map((livre) => (
-            <div
-              key={livre.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative group"
-            >
-              {/* Partie supérieure - imitation couverture */}
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 h-24 flex items-center justify-center p-2">
-                <FaBook className="text-white text-3xl opacity-80" />
-              </div>
-              
-              {/* Contenu */}
-              <div className="p-2">
-                <h4 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2" title={livre.nom}>
-                  {livre.nom}
-                </h4>
-                <p className="text-xs text-gray-600 mb-1 truncate">
-                  {getFormationNom(livre.formation_id)}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-green-600">
-                    {parseFloat(livre.prix).toLocaleString('fr-FR')} Ar
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(livre.created_at).toLocaleDateString('fr-FR')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Menu actions au survol */}
-              <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowActions(showActions === livre.id ? null : livre.id)}
-                    className="p-1.5 bg-white rounded-full shadow-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                  >
-                    <FaEllipsisV size={12} />
-                  </button>
-
-                  {showActions === livre.id && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setShowActions(null)}
-                      />
-                      <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border z-50 min-w-[130px]">
-                        <button
-                          onClick={() => {
-                            handleEdit(livre);
-                            setShowActions(null);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 border-b border-gray-100"
-                        >
-                          <FaEdit className="text-blue-600" size={12} />
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleDelete(livre.id);
-                            setShowActions(null);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
-                        >
-                          <FaTrash size={12} />
-                          Supprimer
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Bouton flottant pour mobile */}
-      {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition md:hidden z-30"
-        >
-          <FaPlus size={16} />
-        </button>
-      )}
     </div>
   );
 };

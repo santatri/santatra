@@ -59,7 +59,7 @@ exports.createPaiement = async (req, res) => {
         (async () => {
           try {
             const det = await pool.query(
-              `SELECT e.prenom, e.nom, e.email, c.nom as centre_nom, f.nom as formation_nom
+              `SELECT e.prenom, e.nom, e.matricule, e.email, c.nom as centre_nom, f.nom as formation_nom
                FROM inscriptions i
                JOIN etudiants e ON i.etudiant_id = e.id
                LEFT JOIN centres c ON e.centre_id = c.id
@@ -181,7 +181,7 @@ exports.createPaiement = async (req, res) => {
         (async () => {
           try {
             const det = await pool.query(
-              `SELECT e.prenom, e.nom, e.email, c.nom as centre_nom, f.nom as formation_nom
+              `SELECT e.prenom, e.nom, e.matricule, e.email, c.nom as centre_nom, f.nom as formation_nom
                FROM inscriptions i
                JOIN etudiants e ON i.etudiant_id = e.id
                LEFT JOIN centres c ON e.centre_id = c.id
@@ -301,7 +301,7 @@ exports.createPaiement = async (req, res) => {
         (async () => {
           try {
             const det = await pool.query(
-              `SELECT e.prenom, e.nom, e.email, c.nom as centre_nom, f.nom as formation_nom
+              `SELECT e.prenom, e.nom, e.matricule, e.email, c.nom as centre_nom, f.nom as formation_nom
                FROM inscriptions i
                JOIN etudiants e ON i.etudiant_id = e.id
                LEFT JOIN centres c ON e.centre_id = c.id
