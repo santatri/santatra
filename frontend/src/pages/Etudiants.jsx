@@ -11,12 +11,12 @@ import {
 import { API_URL } from '../config';
 
 // ==================== Composant SearchableSelect amélioré ====================
-const SearchableSelect = ({ 
-  label, 
-  options = [], 
-  value, 
-  onChange, 
-  placeholder = "Sélectionner...", 
+const SearchableSelect = ({
+  label,
+  options = [],
+  value,
+  onChange,
+  placeholder = "Sélectionner...",
   disabled = false,
   className = "",
   required = false
@@ -29,7 +29,7 @@ const SearchableSelect = ({
   const listRef = useRef(null);
 
   // Filtrer les options en fonction de la recherche
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     opt.label.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -483,7 +483,7 @@ const Etudiants = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet étudiant ?\n\n⚠️ ATTENTION : Cette action est irréversible et supprimera également toutes les données associées (inscriptions, paiements, articles, livres, etc.).")) {
       return;
     }
 
@@ -849,14 +849,18 @@ const Etudiants = () => {
                     <FaEdit className="mr-0.5 text-[8px]" />
                     Modifier
                   </button>
-                  <div className="w-px bg-gray-300"></div>
-                  <button
-                    onClick={() => handleDelete(e.id)}
-                    className="flex-1 inline-flex items-center justify-center text-red-600 hover:text-red-800 font-medium text-[10px] py-0.5"
-                  >
-                    <FaTrash className="mr-0.5 text-[8px]" />
-                    Supprimer
-                  </button>
+                  {user?.role !== 'gerant' && (
+                    <>
+                      <div className="w-px bg-gray-300"></div>
+                      <button
+                        onClick={() => handleDelete(e.id)}
+                        className="flex-1 inline-flex items-center justify-center text-red-600 hover:text-red-800 font-medium text-[10px] py-0.5"
+                      >
+                        <FaTrash className="mr-0.5 text-[8px]" />
+                        Supprimer
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

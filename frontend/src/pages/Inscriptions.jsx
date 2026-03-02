@@ -297,7 +297,8 @@ const Inscriptions = () => {
     const grouped = {};
     inscriptionsAppliquees.forEach(inscription => {
       const etudiantId = inscription.etudiant_id;
-      if (!grouped[etudiantId]) grouped[etudiantId] = { etudiant: inscription.etudiants, inscriptions: [] };
+      if (!etudiantId) return; // Ignore inscriptions without etudiant
+      if (!grouped[etudiantId]) grouped[etudiantId] = { etudiant: inscription.etudiants || {}, inscriptions: [] };
       grouped[etudiantId].inscriptions.push(inscription);
     });
 
@@ -333,8 +334,8 @@ const Inscriptions = () => {
   const etudiantsFiltres = useMemo(() => {
     if (!searchTerm) return etudiantsAvecInscriptions;
     return etudiantsAvecInscriptions.filter(etudiantGroup =>
-      `${etudiantGroup.etudiant.nom} ${etudiantGroup.etudiant.prenom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      etudiantGroup.inscriptions.some(inscription => inscription.formations.nom.toLowerCase().includes(searchTerm.toLowerCase()))
+      `${etudiantGroup.etudiant?.nom || ''} ${etudiantGroup.etudiant?.prenom || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      etudiantGroup.inscriptions.some(inscription => (inscription.formations?.nom || '').toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [etudiantsAvecInscriptions, searchTerm]);
 
@@ -519,7 +520,7 @@ const Inscriptions = () => {
 
     const paiementsCeMois = paiements.filter(p => p.inscription_id === ins.id && p.type_paiement === 'formation' && p.mois_paye === mois);
     const totalDejaPaye = paiementsCeMois.reduce((sum, p) => sum + (p.montant || 0), 0);
-    const fraisMensuel = ins.formations.frais_mensuel || 0;
+    const fraisMensuel = ins.formations?.frais_mensuel || 0;
     const resteAPayer = fraisMensuel - totalDejaPaye;
 
     if (resteAPayer <= 0) {
@@ -654,7 +655,7 @@ const Inscriptions = () => {
     for (const mois of moisList) {
       const paiementsCeMois = paiements.filter(p => p.inscription_id === selectedInscription.id && p.type_paiement === 'formation' && p.mois_paye === mois);
       const totalDejaPaye = paiementsCeMois.reduce((sum, p) => sum + (p.montant || 0), 0);
-      const fraisMensuel = selectedInscription.formations.frais_mensuel || 0;
+      const fraisMensuel = selectedInscription.formations?.frais_mensuel || 0;
       const resteAPayer = fraisMensuel - totalDejaPaye;
 
       if (resteAPayer > 0) {
@@ -838,7 +839,7 @@ const Inscriptions = () => {
               <div className="p-3 border-b border-gray-200 sticky top-0 bg-white">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-base font-semibold text-gray-800">{selectedInscription.etudiants.nom} {selectedInscription.etudiants.prenom}</h2>
+                    <h2 className="text-base font-semibold text-gray-800">{selectedInscription.etudiants?.nom || 'Étudiant'} {selectedInscription.etudiants?.prenom || 'Inconnu'}</h2>
                     {/* Modification de formation (Admin seulement) */}
                     {isEditingFormation ? (
                       <div className="mt-1 flex items-center gap-2">
@@ -869,7 +870,7 @@ const Inscriptions = () => {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <p className="text-gray-600 text-xs">{selectedInscription.formations.nom}</p>
+                        <p className="text-gray-600 text-xs">{selectedInscription.formations?.nom || 'Formation inconnue'}</p>
                         {(user?.role === 'admin' || user?.role === 'dir') && (
                           <button
                             onClick={() => {
@@ -992,7 +993,7 @@ const Inscriptions = () => {
                     )}
                   </div>
                   <div className="space-y-2">
-                    {generateMoisFormation(selectedInscription.date_inscription, selectedInscription.formations.duree).map((mois, index) => {
+                    {generateMoisFormation(selectedInscription.date_inscription, selectedInscription.formations?.duree || 0).map((mois, index) => {
                       const paiementsCeMois = paiements.filter(p => {
                         const pMoisNorm = (p.mois_paye || '').trim().toLowerCase();
                         const moisNorm = mois.trim().toLowerCase();
@@ -1010,7 +1011,7 @@ const Inscriptions = () => {
                         return match;
                       });
                       const totalPaye = paiementsCeMois.reduce((sum, p) => sum + (p.montant || 0), 0);
-                      const fraisMensuel = selectedInscription.formations.frais_mensuel || 0;
+                      const fraisMensuel = selectedInscription.formations?.frais_mensuel || 0;
                       const resteAPayer = Math.max(0, fraisMensuel - totalPaye);
                       const estPaye = resteAPayer === 0;
                       const estPartiel = totalPaye > 0 && totalPaye < fraisMensuel;
@@ -1235,7 +1236,7 @@ const Inscriptions = () => {
                 <div className="flex justify-between items-center">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-sm font-semibold text-gray-800">{etudiantGroup.etudiant.nom} {etudiantGroup.etudiant.prenom}</h3>
+                      <h3 className="text-sm font-semibold text-gray-800">{etudiantGroup.etudiant?.nom || 'Étudiant'} {etudiantGroup.etudiant?.prenom || 'Inconnu'}</h3>
                       <span className={`px-1.5 py-0.5 rounded-full text-xs ${etudiantGroup.globalStatus === 'actif' ? 'bg-green-100 text-green-800' : etudiantGroup.globalStatus === 'quitte' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{etudiantGroup.globalStatus || 'Non défini'}</span>
                     </div>
                     <p className="text-gray-600 text-xs">
@@ -1269,12 +1270,12 @@ const Inscriptions = () => {
                     }}>
                       <div className="flex justify-between items-start bg-blue-200">
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 mb-1">{inscription.formations.nom}</h4>
+                          <h4 className="text-sm font-medium text-gray-900 mb-1">{inscription.formations?.nom || 'Formation inconnue'}</h4>
                           <div className="flex items-center gap-2 mb-1">
                             <span className={`px-1.5 py-0.5 rounded-full text-xs ${(studentsWithDroits.has(inscription.etudiant_id) || inscription.droits_inscription_paye) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                               {(studentsWithDroits.has(inscription.etudiant_id) || inscription.droits_inscription_paye) ? '✓ Droits payés' : '! Droits impayés'}
                             </span>
-                            <span className="text-xs text-gray-500">{inscription.formations.duree} mois</span>
+                            <span className="text-xs text-gray-500">{inscription.formations?.duree || 0} mois</span>
                           </div>
                           <p className="text-gray-600 text-xs">Inscrit le {new Date(inscription.date_inscription).toLocaleDateString('fr-FR')}</p>
                           <div className="mt-1">
@@ -1284,7 +1285,7 @@ const Inscriptions = () => {
                           </div>
                         </div>
                         <div className="text-right text-xs text-gray-500 ml-2">
-                          <div className="text-purple-600 font-medium">{inscription.formations.frais_mensuel?.toLocaleString()} Ar/mois</div>
+                          <div className="text-purple-600 font-medium">{inscription.formations?.frais_mensuel?.toLocaleString() || 0} Ar/mois</div>
                           {/* Bouton rapide pour payer les droits si non payés */}
                           {!(studentsWithDroits.has(inscription.etudiant_id) || inscription.droits_inscription_paye) &&
                             canPayStudent(etudiantGroup.etudiant) &&

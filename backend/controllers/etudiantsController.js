@@ -321,46 +321,66 @@ const updateEtudiant = async (req, res) => {
 
 // Supprimer un étudiant
 const deleteEtudiant = async (req, res) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
     const user = req.user || null;
 
     // Vérifier si l'étudiant existe
-    const etudiantCheck = await pool.query(
+    const etudiantCheck = await client.query(
       'SELECT * FROM etudiants WHERE id = $1',
       [id]
     );
 
     if (etudiantCheck.rows.length === 0) {
+      client.release();
       return res.status(404).json({ message: 'Étudiant non trouvé' });
     }
 
     // Vérifier l'accès si gérant
     if (user && user.role === 'gerant') {
       if (etudiantCheck.rows[0].centre_id !== user.centre_id) {
+        client.release();
         return res.status(403).json({ message: 'Accès non autorisé' });
       }
     }
 
-    // Vérifier si l'étudiant a des inscriptions
-    const inscriptionsCheck = await pool.query(
-      'SELECT COUNT(*) FROM inscriptions WHERE etudiant_id = $1',
-      [id]
-    );
+    // Début de la transaction
+    await client.query('BEGIN');
 
-    if (parseInt(inscriptionsCheck.rows[0].count) > 0) {
-      return res.status(400).json({
-        message: 'Impossible de supprimer cet étudiant car il a des inscriptions associées'
-      });
-    }
+    // 1. Supprimer les paiements liés aux inscriptions de l'étudiant
+    await client.query(`
+      DELETE FROM paiements 
+      WHERE inscription_id IN (
+        SELECT id FROM inscriptions WHERE etudiant_id = $1
+      )
+    `, [id]);
 
-    // Supprimer l'étudiant
-    await pool.query('DELETE FROM etudiants WHERE id = $1', [id]);
+    // 2. Supprimer les inscriptions
+    await client.query('DELETE FROM inscriptions WHERE etudiant_id = $1', [id]);
 
-    res.json({ message: 'Étudiant supprimé avec succès' });
+    // 3. Supprimer les articles de l'étudiant
+    await client.query('DELETE FROM articles_etudiants WHERE etudiant_id = $1', [id]);
+
+    // 4. Supprimer les livres de l'étudiant
+    await client.query('DELETE FROM livres_etudiants WHERE etudiant_id = $1', [id]);
+
+    // 5. Supprimer les autres montants de l'étudiant
+    await client.query('DELETE FROM montants_autres WHERE etudiant_id = $1', [id]);
+
+    // 6. Supprimer l'étudiant
+    await client.query('DELETE FROM etudiants WHERE id = $1', [id]);
+
+    // Valider la transaction
+    await client.query('COMMIT');
+
+    res.json({ message: 'Étudiant et toutes ses données associées ont été supprimés avec succès' });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Erreur deleteEtudiant:', err);
     res.status(500).json({ message: 'Erreur serveur lors de la suppression de l\'étudiant' });
+  } finally {
+    client.release();
   }
 };
 

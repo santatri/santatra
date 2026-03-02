@@ -5,7 +5,7 @@ exports.getAllInscriptions = async (req, res) => {
   try {
     const { centre_id, formation_id, statut, page = 1, limit = 10, search } = req.query;
     const offset = (page - 1) * limit;
-    
+
     let query = `
       SELECT 
         i.*,
@@ -15,11 +15,11 @@ exports.getAllInscriptions = async (req, res) => {
         c.nom as centre_nom
       FROM inscriptions i
       JOIN etudiants e ON i.etudiant_id = e.id
-      JOIN formations f ON i.formation_id = f.id
-      JOIN centres c ON e.centre_id = c.id
+      LEFT JOIN formations f ON i.formation_id = f.id
+      LEFT JOIN centres c ON e.centre_id = c.id
       WHERE 1=1
     `;
-    
+
     const params = [];
     let paramCount = 1;
 
@@ -114,7 +114,7 @@ exports.getAllInscriptions = async (req, res) => {
 exports.getInscriptionById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const query = `
       SELECT 
         i.*,
@@ -124,13 +124,13 @@ exports.getInscriptionById = async (req, res) => {
         c.nom as centre_nom
       FROM inscriptions i
       JOIN etudiants e ON i.etudiant_id = e.id
-      JOIN formations f ON i.formation_id = f.id
-      JOIN centres c ON e.centre_id = c.id
+      LEFT JOIN formations f ON i.formation_id = f.id
+      LEFT JOIN centres c ON e.centre_id = c.id
       WHERE i.id = $1
     `;
-    
+
     const result = await pool.query(query, [id]);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
