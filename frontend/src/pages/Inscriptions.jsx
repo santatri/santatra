@@ -151,7 +151,7 @@ const Inscriptions = () => {
     setLoading(true);
     try {
       // Inscriptions (backend renvoie l'ensemble des inscriptions avec paiements)
-      const insRes = await fetch(`${API_BASE}/inscriptions`);
+      const insRes = await fetch(`${API_BASE}/inscriptions?limit=10000`);
       const insJson = await insRes.json();
       const insc = (insJson && insJson.data) ? insJson.data : [];
 
