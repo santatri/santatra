@@ -221,8 +221,8 @@ const Examen = () => {
         date_examen: formData.date_examen
       };
       const method = editingId ? 'PUT' : 'POST';
-      const url = editingId 
-        ? `${API_URL}/api/examens/${editingId}` 
+      const url = editingId
+        ? `${API_URL}/api/examens/${editingId}`
         : `${API_URL}/api/examens`;
 
       await fetch(url, {
@@ -408,25 +408,23 @@ const Examen = () => {
       {/* En-tête avec titre et onglets */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Examens & Paiements</h1>
-        
+
         <div className="flex border-b border-gray-200/80">
           <button
             onClick={() => setActiveTab('examens')}
-            className={`py-2 px-4 font-medium text-sm md:text-base focus:outline-none transition-all relative ${
-              activeTab === 'examens'
+            className={`py-2 px-4 font-medium text-sm md:text-base focus:outline-none transition-all relative ${activeTab === 'examens'
                 ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600 after:rounded-t-full'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             Examens
           </button>
           <button
             onClick={() => setActiveTab('paiements')}
-            className={`py-2 px-4 font-medium text-sm md:text-base focus:outline-none transition-all relative ${
-              activeTab === 'paiements'
+            className={`py-2 px-4 font-medium text-sm md:text-base focus:outline-none transition-all relative ${activeTab === 'paiements'
                 ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600 after:rounded-t-full'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             Paiements
           </button>
@@ -435,11 +433,10 @@ const Examen = () => {
 
       {/* Message flash */}
       {message && (
-        <div className={`mb-4 p-4 rounded-xl text-sm flex items-center justify-between shadow-sm ${
-          message.includes('Erreur') 
-            ? 'bg-red-50 text-red-800 border border-red-200' 
+        <div className={`mb-4 p-4 rounded-xl text-sm flex items-center justify-between shadow-sm ${message.includes('Erreur')
+            ? 'bg-red-50 text-red-800 border border-red-200'
             : 'bg-green-50 text-green-800 border border-green-200'
-        }`}>
+          }`}>
           <span>{message}</span>
           <button onClick={() => setMessage('')} className="text-gray-500 hover:text-gray-700 p-1">
             <FaTimes />
@@ -660,8 +657,8 @@ const Examen = () => {
                   type="date"
                   name="date_paiement"
                   value={paiementData.date_paiement}
-                  readOnly
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-100/50 cursor-not-allowed"
+                  onChange={(e) => handlePaiementChange('date_paiement', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white/50"
                   required
                 />
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
